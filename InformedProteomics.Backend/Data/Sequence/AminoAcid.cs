@@ -1,4 +1,6 @@
-﻿namespace InformedProteomics.Backend.Utils
+using InformedProteomics.Backend.Utils;
+
+namespace InformedProteomics.Backend.Data.Sequence
 {
     public class AminoAcid : IMolecule
     {

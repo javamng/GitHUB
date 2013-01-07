@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using InformedProteomics.Backend.Utils;
 
-namespace InformedProteomics.Backend.Utils
+namespace InformedProteomics.Backend.Data.Sequence
 {
     public class Atom : IMatter
     {
