@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DeconTools.Backend;
 using DeconTools.Backend.Core;
 using DeconTools.Backend.Utilities.IsotopeDistributionCalculation;
+using InformedProteomics.Backend.Data.Spectrometry;
 using InformedProteomics.Backend.Utils;
 
 namespace InformedProteomics.Backend.Data.Targets
