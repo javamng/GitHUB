@@ -7,5 +7,6 @@ namespace InformedProteomics.Backend.Scoring
 {
     class FragmentScorer
     {
+        public float Score { get; private set; }
     }
 }

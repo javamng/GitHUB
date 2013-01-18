@@ -5,7 +5,12 @@ using System.Text;
 
 namespace InformedProteomics.Backend.Scoring
 {
-    class ScoreParameter
+    public static class ScoreParameter
     {
+        public static void read(String fileName)
+        {
+        }
+
+
     }
 }
