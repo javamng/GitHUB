@@ -5,7 +5,7 @@ using System.Text;
 
 namespace InformedProteomics.Backend.Scoring
 {
-    class IScorer
+    class XDirectionScorer
     {
     }
 }
