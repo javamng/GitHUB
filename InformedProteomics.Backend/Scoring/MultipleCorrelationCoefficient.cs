@@ -24,7 +24,7 @@ namespace InformedProteomics.Backend.Scoring
         public float Get()
         {
             int N = Y.RowCount;
-            int J = X.ColumnCount-1;
+            int J = X.ColumnCount;
 
 
             var ones = new DenseMatrix(N, 1, 1);

@@ -12,5 +12,10 @@ namespace InformedProteomics.Backend.Scoring
         }
 
 
+
+        internal static float GetPrecursorIonCorrelationCoefficient(int c1, int c2)
+        {
+            return 0.8f;
+        }
     }
 }
