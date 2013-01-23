@@ -1,8 +1,7 @@
-﻿using MathNet.Numerics.LinearAlgebra.Single;
+﻿using System.Linq;
+using MathNet.Numerics.LinearAlgebra.Generic;
+using MathNet.Numerics.LinearAlgebra.Single;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace InformedProteomics.Backend.Scoring
 {
@@ -15,30 +14,57 @@ namespace InformedProteomics.Backend.Scoring
 
         public MultipleCorrelationCoefficient(DenseMatrix x, DenseMatrix y, DenseMatrix rxx, DenseMatrix rxy)// x should be appended to 1s
         {
-            X = x;
-            Y = y;
+            X = Standardize(x);
+            Y = Standardize(y);
             Rxx = rxx;
             Rxy = rxy;
         }
 
         public float Get()
         {
-            int N = Y.RowCount;
-            int J = X.ColumnCount;
-
-
-            var ones = new DenseMatrix(N, 1, 1);
+            var n = Y.RowCount;
+            var j = X.ColumnCount;
            
             var estY = X.Multiply(Rxx.Inverse().Multiply(Rxy));
-            float yvar = ones.Transpose().Multiply(Y).At(0,0);
-            yvar = yvar * yvar / N;
+            var yvar = new DenseMatrix(n, 1, 1).Transpose().Multiply(Y).At(0,0);
+            yvar = yvar * yvar / n;
 
-            float ssr = estY.Transpose().Multiply(Y).At(0,0) - yvar;
-            float sst = Y.Transpose().Multiply(Y).At(0, 0) - yvar;
+            var ssr = estY.Transpose().Multiply(Y).At(0,0) - yvar;
+            var sst = Y.Transpose().Multiply(Y).At(0, 0) - yvar;
 
-            float r2 = ssr / sst;
+            var r2 = ssr / sst;
             
-            return 1 - ((1 - r2) * (N - 1) / (N - J - 1));
+            return 1 - ((1 - r2) * (n - 1) / (n - j - 1));
+        }
+
+        private static DenseMatrix Standardize(DenseMatrix x) // return standardized x (i.e., mean = 0, var = 1) 
+        {
+            var sx = new DenseMatrix(x.RowCount, x.ColumnCount);
+            for (var i = 0; i < x.ColumnCount; i++)
+            { 
+                var c = x.Column(i);
+                var m = GetSampleMean(c);
+                var v = GetSampleVariance(c, m);
+               
+                for (var k = 0; k < x.RowCount; k++)
+                {
+                    sx.At(k,i, (x.At(k,i) - m) / (float)Math.Sqrt(v));
+                }
+            }
+            return sx;
+        }
+
+
+        private static float GetSampleMean(Vector<float> x)
+        {
+            var m = Enumerable.Sum(x);
+            return m / x.Count;
+        }
+
+        private static float GetSampleVariance(Vector<float> x, float m)
+        {
+            var var = x.Sum(v => (v - m)*(v - m));
+            return var / (x.Count - 1);
         }
 
 
@@ -46,15 +72,15 @@ namespace InformedProteomics.Backend.Scoring
         {
             var x = new DenseMatrix(18, 2, new float[] { 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 2, 2, 4, 4, 8, 8, 2, 2, 4, 4, 8, 8, 2, 2, 4, 4, 8, 8});//{ 2, 2, 2, 2, 2, 4, 2, 4, 2, 8, 2, 8, 4, 2, 4, 2, 4, 4, 4, 4, 4, 8, 4, 8, 8, 2, 8, 2, 8, 4, 8, 4, 8, 8, 8, 8 });
             var y = new DenseMatrix(18, 1, new float[] { 35, 39, 21, 31, 6, 8, 40, 52, 34, 42, 18, 26, 61, 73, 58, 66, 46, 52 });
-            int N = y.RowCount;
-            int J = x.ColumnCount;
-            var ones = new DenseMatrix(N, 1, 1);
-            DenseMatrix newX = new DenseMatrix(N, J + 1, 0);
+            var n = y.RowCount;
+            var j = x.ColumnCount;
+            var ones = new DenseMatrix(n, 1, 1);
+            var newX = new DenseMatrix(n, j + 1, 0);
             ones.Append(x, newX);
 
             var rxx = (DenseMatrix)newX.TransposeThisAndMultiply(newX);
             var rxy = (DenseMatrix)newX.TransposeThisAndMultiply(y);
-            float r2 = new MultipleCorrelationCoefficient(newX, y, rxx, rxy).Get();
+            var r2 = new MultipleCorrelationCoefficient(newX, y, rxx, rxy).Get();
             Console.Write(r2);
         }
 

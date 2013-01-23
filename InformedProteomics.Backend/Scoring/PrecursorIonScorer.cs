@@ -1,9 +1,7 @@
 ﻿using InformedProteomics.Backend.Data.Results;
 using MathNet.Numerics.LinearAlgebra.Single;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace InformedProteomics.Backend.Scoring
 {
@@ -27,121 +25,86 @@ namespace InformedProteomics.Backend.Scoring
         {
             if (PrecursorResults.Count == 1) return 0;
 
-            DenseMatrix[] R = GetCorrelationMatrices();
+            var r = GetCorrelationMatrices();
 
-            return new MultipleCorrelationCoefficient(GetX(), GetY(), R[0], R[1]).Get();
+            return new MultipleCorrelationCoefficient(GetX(), GetY(), r[0], r[1]).Get();
         }
 
         private DenseMatrix GetX()
         {
-            int J = PrecursorResults.Count;
-            int N = PrecursorResultRep.XYData.Yvalues.Length;
+            var j = PrecursorResults.Count;
+            var l = PrecursorResultRep.XYData.Yvalues.Length;
 
-            DenseMatrix X = new DenseMatrix(N, J-1, 0);
+            var x = new DenseMatrix(l, j-1, 0);
 
-            int n = 0;
-            for (int i = 0; i < J;i++)
+            var n = 0;
+            for (var i = 0; i < j;i++)
             {
-                DatabaseSubTargetResult r = PrecursorResults.ElementAt<DatabaseSubTargetResult>(i);
+                var r = PrecursorResults.ElementAt(i);
                 if (r.Equals(PrecursorResultRep)) continue;
 
-                float[] s = Standardize(r.XYData.Yvalues);
+                var s = r.XYData.Yvalues;
 
-                for (int j = 0; j < N; j++)
+                for (var k = 0; k < l; k++)
                 {
-                    X.At(j,n,s[j]);
+                    x.At(k,n,(float)s[k]);
                 }
                 n++;
             }
 
-            return X;
+            return x;
         }
 
         private DenseMatrix GetY()
         {
-            int N = PrecursorResultRep.XYData.Yvalues.Length;
+            var l = PrecursorResultRep.XYData.Yvalues.Length;
 
-            DenseMatrix Y = new DenseMatrix(N, 1, 0);
-            float[] s = Standardize(PrecursorResultRep.XYData.Yvalues);
+            var y = new DenseMatrix(l, 1, 0);
+            var s = PrecursorResultRep.XYData.Yvalues;
 
-            for (int j = 0; j < N; j++)
+            for (var j = 0; j < l; j++)
             {
-                Y.At(j, 0, s[j]);
+                y.At(j, 0, (float)s[j]);
             }
              
-            return Y;
+            return y;
         }
 
         private DenseMatrix[] GetCorrelationMatrices()
         {
-            int J = PrecursorResults.Count;
-            DenseMatrix Rxx = new DenseMatrix(J - 1, J - 1, 0);
-            DenseMatrix Rxy = new DenseMatrix(J - 1, 1, 0);
+            var j = PrecursorResults.Count;
+            var rxx = new DenseMatrix(j - 1, j - 1, 0);
+            var rxy = new DenseMatrix(j - 1, 1, 0);
 
-            int[] charges = new int[J-1];
-            int charge = 0;
-            int n = 0;
-            for (int i = 0; i < J; i++)
+            var charges = new int[j-1];
+            var charge = 0;
+            var n = 0;
+            for (var i = 0; i < j; i++)
             {
-                DatabaseSubTargetResult r = PrecursorResults.ElementAt<DatabaseSubTargetResult>(i);
+                var r = PrecursorResults.ElementAt(i);
                 if (r.Equals(PrecursorResultRep))
                 {
-                    charge = ChargeStateList.ElementAt<int>(i);
+                    charge = ChargeStateList.ElementAt(i);
                     continue;
                 }
-                charges[n] = ChargeStateList.ElementAt<int>(i);
+                charges[n] = ChargeStateList.ElementAt(i);
                 n++;
             }
 
-            for (int i = 0; i < J - 1;i++)
+            for (var i = 0; i < j - 1;i++)
             {
-                for (int j = 0; j < J - 1; j++)
+                for (var k = 0; k < j - 1; k++)
                 {
-                    Rxx.At(i,j,ScoreParameter.GetPrecursorIonCorrelationCoefficient(charges[i], charges[j]));
+                    rxx.At(i,k,ScoreParameter.GetPrecursorIonCorrelationCoefficient(charges[i], charges[k]));
                 }
-                Rxy.At(i, 0, ScoreParameter.GetPrecursorIonCorrelationCoefficient(charges[i], charge));
+                rxy.At(i, 0, ScoreParameter.GetPrecursorIonCorrelationCoefficient(charges[i], charge));
             }
 
-            return new DenseMatrix[2] { Rxx, Rxy }; 
+            return new[] { rxx, rxy }; 
         }
 
       
-        private float[] Standardize(double[] x) // return standardized x (i.e., mean = 0, var = 1) 
-        {
-            float m = GetSampleMean(x);
-            float v = GetSampleVariance(x, m);
-            float[] sx = new float[x.Length];
-
-            for (int i = 0; i < x.Length; i++)
-            {
-                sx[i] = ((float)x[i] - m) / (float)Math.Sqrt(v);
-            }
-            return sx;
-        }
-
-
-        private float GetSampleMean(double[] x)
-        {
-            float m = 0;
-            foreach (float v in x)
-            {
-                m += v;
-            }
-
-            return m/x.Length;
-        }
-
-        private float GetSampleVariance(double[] x, float m)
-        {       
-            float var = 0;
-
-            foreach (float v in x)
-            {
-                var += (v-m)*(v-m);
-            }
-            return var/(x.Length-1);
-        }
-
+        
 
        
     }
