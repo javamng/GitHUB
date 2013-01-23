@@ -67,7 +67,7 @@ namespace InformedProteomics.Backend.Scoring
             return var / (x.Count - 1);
         }
 
-
+        /*
         static public void Main(String[] args)
         {
             var x = new DenseMatrix(18, 2, new float[] { 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 8, 8, 8, 8, 8, 8, 2, 2, 4, 4, 8, 8, 2, 2, 4, 4, 8, 8, 2, 2, 4, 4, 8, 8});//{ 2, 2, 2, 2, 2, 4, 2, 4, 2, 8, 2, 8, 4, 2, 4, 2, 4, 4, 4, 4, 4, 8, 4, 8, 8, 2, 8, 2, 8, 4, 8, 4, 8, 8, 8, 8 });
@@ -83,6 +83,6 @@ namespace InformedProteomics.Backend.Scoring
             var r2 = new MultipleCorrelationCoefficient(newX, y, rxx, rxy).Get();
             Console.Write(r2);
         }
-
+        */
     }
 }
