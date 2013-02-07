@@ -1,17 +1,18 @@
-﻿using MathNet.Numerics.LinearAlgebra.Single;
+﻿using System;
+using MathNet.Numerics.LinearAlgebra.Single;
 using System.Collections.Generic;
 
 namespace InformedProteomics.Backend.Scoring
 {
     class FragmentXICScorer
     {
-        public Dictionary<string, double[]> IonXICsPerFragment { get; private set; }
+        public Dictionary<IonType, double[]> IonXICsPerFragment { get; private set; }
         public double[] PrecursorXIC { get; private set; }
-        public List<string> UsedIonTypes { get; private set; }
-
+        public List<IonType> UsedIonTypes { get; private set; }
+        public float RawScore { get; private set; }
         public float Score { get; private set; }
 
-        public FragmentXICScorer(Dictionary<string, double[]> ionXICsPerFragment, List<string> usedIonTypes, double[] precursorXIC)
+        public FragmentXICScorer(Dictionary<IonType, double[]> ionXICsPerFragment, List<IonType> usedIonTypes, double[] precursorXIC)
         {
             IonXICsPerFragment = ionXICsPerFragment;
             UsedIonTypes = usedIonTypes;
@@ -22,8 +23,8 @@ namespace InformedProteomics.Backend.Scoring
         private float GetScore()
         {
             var r = GetCorrelationMatrices();
-
-            return new MultipleCorrelationCoefficient(GetX(), GetY(), r[0], r[1]).Get();
+            RawScore = new MultipleCorrelationCoefficient(GetX(), GetY(), r[0], r[1]).Get();
+            return ScoreParameter.GetProductIonXICLikelihoodRatioScore(RawScore, UsedIonTypes.Count);
         }
 
         private DenseMatrix GetX()

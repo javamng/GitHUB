@@ -1,4 +1,5 @@
-﻿using InformedProteomics.Backend.Data.Results;
+﻿using System;
+using InformedProteomics.Backend.Data.Results;
 using MathNet.Numerics.LinearAlgebra.Single;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace InformedProteomics.Backend.Scoring
             PrecursorResultRep = matchedResult.PrecursorResultRep;
             ChargeStateList = matchedResult.ChargeStateList;
             Score = GetScore();
+            //Console.WriteLine("Precursor Score : " + Score);
         }
 
 
@@ -26,8 +28,8 @@ namespace InformedProteomics.Backend.Scoring
             if (PrecursorResults.Count == 1) return 0;
 
             var r = GetCorrelationMatrices();
-
-            return new MultipleCorrelationCoefficient(GetX(), GetY(), r[0], r[1]).Get();
+            var rawScore = new MultipleCorrelationCoefficient(GetX(), GetY(), r[0], r[1]).Get();
+            return ScoreParameter.GetPrecursorIonLikelihoodRatioScore(rawScore, PrecursorResults.Count);
         }
 
         private DenseMatrix GetX()

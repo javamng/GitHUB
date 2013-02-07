@@ -20,24 +20,37 @@ namespace InformedProteomics.Backend.Scoring
             Rxy = rxy;
         }
 
+        private void PrintMatrix(DenseMatrix m)
+        {
+            for (var i = 0; i < m.RowCount; i++)
+            {
+                for (var j = 0; j < m.ColumnCount; j++)
+                {
+                    Console.Write(m.At(i,j) + "\t");
+                }
+                Console.WriteLine();
+            }
+        }
+
         public float Get()
         {
             var n = Y.RowCount;
-            var j = X.ColumnCount;
+           // var j = X.ColumnCount;
            
             var estY = X.Multiply(Rxx.Inverse().Multiply(Rxy));
             var yvar = new DenseMatrix(n, 1, 1).Transpose().Multiply(Y).At(0,0);
             yvar = yvar * yvar / n;
 
-            var ssr = estY.Transpose().Multiply(Y).At(0,0) - yvar;
+            var ssr = estY.Transpose().Multiply(Y).At(0, 0) - yvar;
             var sst = Y.Transpose().Multiply(Y).At(0, 0) - yvar;
-
-            var r2 = ssr / sst;
+           
             
-            return 1 - ((1 - r2) * (n - 1) / (n - j - 1));
+            var r2 = Math.Max(0,ssr) / sst;
+            
+            return r2;
         }
 
-        private static DenseMatrix Standardize(DenseMatrix x) // return standardized x (i.e., mean = 0, var = 1) 
+        private static DenseMatrix Standardize(Matrix<float> x) // return standardized x (i.e., mean = 0, var = 1) 
         {
             var sx = new DenseMatrix(x.RowCount, x.ColumnCount);
             for (var i = 0; i < x.ColumnCount; i++)

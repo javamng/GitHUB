@@ -1,5 +1,7 @@
-﻿using InformedProteomics.Backend.Data.Results;
+﻿using System;
+using InformedProteomics.Backend.Data.Results;
 using InformedProteomics.Backend.Data.Sequence;
+using InformedProteomics.Backend.Utils;
 
 namespace InformedProteomics.Backend.Scoring
 {
@@ -11,10 +13,12 @@ namespace InformedProteomics.Backend.Scoring
         public Scorer(Sequence seq, DatabaseMultipleSubTargetResult matchedResult)
         {
             Seq = seq;
-            MatchedResult = matchedResult;
+            MatchedResult = TrimXYData(matchedResult);
             PrecursorIonScore = new PrecursorIonScorer(MatchedResult).Score;
             ProductIonScore = new ProductIonScorer(MatchedResult).Score;
-            Score = PrecursorIonScore + ProductIonScore;
+            //Console.WriteLine(PrecursorIonScore + "\t" + ProductIonScore);
+            //PrecursorIonScore just use to choose best XIC. Then just use ProductIonScore... imp next.. TODO
+            Score = ProductIonScore;
         }
 
         public Sequence Seq
@@ -35,6 +39,22 @@ namespace InformedProteomics.Backend.Scoring
             private set;
         }
 
-      
+        private DatabaseMultipleSubTargetResult TrimXYData(DatabaseMultipleSubTargetResult result)
+        {
+            var refXYData = result.PrecursorResultRep.XYData;
+            foreach (var r in result.SubTargetResultList)
+            {
+                var aligned = DataUtil.AlignXYData(refXYData, r.XYData, 0);
+                r.XYData.Xvalues = aligned.Xvalues;
+                r.XYData.Yvalues = aligned.Yvalues;
+            }
+            foreach (var r in result.FragmentResultList)
+            {
+                var aligned = DataUtil.AlignXYData(refXYData, r.XYData, 1);
+                r.XYData.Xvalues = aligned.Xvalues;
+                r.XYData.Yvalues = aligned.Yvalues;
+            }
+            return result;
+        }
     }
 }
