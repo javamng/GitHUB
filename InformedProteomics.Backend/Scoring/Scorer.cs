@@ -7,7 +7,7 @@ namespace InformedProteomics.Backend.Scoring
 {
     public class Scorer : IScorer
     {
-        public float PrecursorIonScore { get; private set; }
+        //public float PrecursorIonScore { get; private set; }
         public float ProductIonScore { get; private set; }
 
         public Scorer(Sequence seq, DatabaseMultipleSubTargetResult matchedResult)
@@ -15,7 +15,7 @@ namespace InformedProteomics.Backend.Scoring
             Seq = seq;
             MatchedResult = TrimXYData(matchedResult);
             //PrecursorIonScore = new PrecursorIonScorer(MatchedResult).Score;
-            //ProductIonScore = new ProductIonScorer(MatchedResult).Score;
+            ProductIonScore = new ProductIonScorer(MatchedResult).Score;
             //Console.WriteLine(PrecursorIonScore + "\t" + ProductIonScore);
             //PrecursorIonScore just use to choose best XIC. Then just use ProductIonScore... imp next.. TODO
             Score = ProductIonScore;
