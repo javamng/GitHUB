@@ -78,8 +78,7 @@ namespace InformedProteomics.Backend.Scoring
                 float subScore;
                 if (IonXICs.ContainsKey(residueNumber))
                 {
-                    var specScorer = new FragmentSpectrumScorer(Spectra[residueNumber], Sequence[residueNumber - 1],
-                                                        Sequence[residueNumber]); // check if +1 or -1..
+                    var specScorer = new FragmentSpectrumScorer(Spectra[residueNumber]); // check if +1 or -1..
 
 
                     

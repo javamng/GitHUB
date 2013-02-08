@@ -11,11 +11,9 @@ namespace InformedProteomics.Backend.Scoring
         public List<IonType> UsedIons { get; private set; }
         public int BestSpectrumIndex { get; private set; }
 
-        public FragmentSpectrumScorer(Dictionary<IonType, double>[] spectraPerFragment, char precedingAA, char succeedingAA)
+        public FragmentSpectrumScorer(Dictionary<IonType, double>[] spectraPerFragment)
         {
             SpectraPerFragment = spectraPerFragment;
-            PrecedingAa = precedingAA;
-            SucceedingAa = succeedingAA;
             Score = GetScore();
         }
 

@@ -13,7 +13,7 @@ namespace InformedProteomics.Backend.Scoring
         {
             Seq = seq;
             MatchedResult = AlignResult(matchedResult);
-            ProductIonScore = new ProductIonScorer(MatchedResult).Score;
+            ProductIonScore = new ProductIonScorer(MatchedResult, seq).Score;
             //PrecursorIonScore just use to choose best XIC. Then just use ProductIonScore... imp next.. TODO
             Score = ProductIonScore;
         }
