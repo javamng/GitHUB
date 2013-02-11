@@ -13,7 +13,7 @@ namespace InformedProteomics.Backend.Scoring
         public Sequence Peptide { get; private set; }
         public DatabaseSubTargetResult PrecursorResultRep { get; private set; }
         private HashSet<int> _matchedResidues;
-        private static readonly Dictionary<FragmentSpectrumParameter, float> NoXICScore = null;
+        private static readonly Dictionary<FragmentSpectrumParameter, float> NoXICScore = new Dictionary<FragmentSpectrumParameter, float>();
  
         public ProductIonScorer(DatabaseMultipleSubTargetResult matchedResult, Sequence peptide)
         {

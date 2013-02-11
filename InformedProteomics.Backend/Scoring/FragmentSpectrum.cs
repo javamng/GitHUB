@@ -6,6 +6,7 @@ namespace InformedProteomics.Backend.Scoring
     {
         public double GetIntensity(IonType ion)
         {
+            if (ion == null) return 0;
             return !ContainsKey(ion) ? 0 : this[ion];
         }
 
