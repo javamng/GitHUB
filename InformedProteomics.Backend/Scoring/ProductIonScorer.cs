@@ -63,6 +63,7 @@ namespace InformedProteomics.Backend.Scoring
                 var ion = new IonType(fragment.IonSymbol, fragment.ChargeState);//TODO isotope
 
                 //  fragmentTargetResult.PeakQualityData.IsotopicProfile.
+                if (residueNumber < 0 || FragmentXICSets.Length - 1 < residueNumber) continue;
                 FragmentXICSets[residueNumber].AddIonXIC(ion, fragmentTargetResult.XYData.Yvalues);    
                 for (var i = 0; i < fragmentTargetResult.XYData.Yvalues.Length; i++)
                 {
@@ -94,12 +95,12 @@ namespace InformedProteomics.Backend.Scoring
                     subScore = fragXICScorer.Score + specScorer.Score;
                     if (fragmentXICSet.Count == 0) NoXICScore[par] = subScore;
                     Console.WriteLine("Frag Score : " + residueNumber + "\t" + specScorer.Score + "\t" +
-                                      fragXICScorer.RawScore + "\t" + fragXICScorer.Score + "\t" +
+                                      fragXICScorer.Score + "\t" +
                                       specScorer.UsedIons.Count + "\t" + fragmentXICSet.Count);
                 }
                 score += subScore; 
             }
-            Console.WriteLine();
+            Console.WriteLine("Score : " + score);
             return score;                        
         }
 
