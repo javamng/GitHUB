@@ -70,6 +70,9 @@
     <Reference Include="MultiAlignEngine">
       <HintPath>..\lib\DeconTools\$(Platform)\MultiAlignEngine.dll</HintPath>
     </Reference>
+    <Reference Include="MultiDimensionalPeakFinding">
+      <HintPath>..\lib\x64\MultiDimensionalPeakFinding.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -91,6 +94,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TestIQMillion.cs" />
     <Compile Include="TestUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestDeconToolsWorkflow.cs" />

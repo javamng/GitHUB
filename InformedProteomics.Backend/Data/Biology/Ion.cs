@@ -6,5 +6,10 @@ namespace InformedProteomics.Backend.Data.Biology
     {
         public Composition Composition { get; set; }
         public int Charge { get; set; }
+
+        public double GetMz()
+        {
+            return (Composition.GetMass() + Constants.H2O + Charge * Constants.H) / Charge;
+        }
     }
 }
