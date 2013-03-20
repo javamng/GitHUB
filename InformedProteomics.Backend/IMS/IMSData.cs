@@ -7,26 +7,26 @@ using UIMFLibrary;
 
 namespace InformedProteomics.Backend.IMS
 {
-    public class IMSData
+    public class ImsData
     {
         private readonly UimfUtil _uimfUtil;
         private readonly string _filePath;
 
-        public IMSData(string filePath)
+        public ImsData(string filePath)
         {
             _filePath = filePath;
             _uimfUtil = new UimfUtil(filePath);
         }
 
-        public virtual XIC GetXIC(double mz, Tolerance tolerance, DataReader.FrameType frameType)
+        public virtual XIC GetXic(double mz, Tolerance tolerance, DataReader.FrameType frameType)
         {
-            double[,] intensityBlock = _uimfUtil.GetXic(mz, tolerance.GetValue(), frameType, tolerance.GetUnit());
+            List<IntensityPoint> intensityBlock = _uimfUtil.GetXic(mz, tolerance.GetValue(), frameType, tolerance.GetUnit());
             var xic = new XIC(intensityBlock);
 
             return xic;
         }
 
-        public virtual XIC GetXIC(int targetBin, DataReader.FrameType frameType)
+        public virtual XIC GetXic(int targetBin, DataReader.FrameType frameType)
         {
             List<IntensityPoint> intensityPointList = _uimfUtil.GetXic(targetBin, frameType);
             var xic = new XIC(intensityPointList);

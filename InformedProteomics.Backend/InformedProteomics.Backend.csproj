@@ -120,7 +120,6 @@
     <Compile Include="Data\Targets\NominalMassTarget.cs" />
     <Compile Include="IMSScoring\ImsScorer.cs" />
     <Compile Include="IMS\Feature.cs" />
-    <Compile Include="IMS\Feature4D.cs" />
     <Compile Include="IMS\IMSDataCached.cs" />
     <Compile Include="IMS\XIC.cs" />
     <Compile Include="Scoring\CorrelationCoefficientProbabilityTrainer.cs" />
