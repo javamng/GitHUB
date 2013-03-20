@@ -18,18 +18,18 @@ namespace InformedProteomics.Backend.IMS
             _uimfUtil = new UimfUtil(filePath);
         }
 
-        public virtual XIC GetXic(double mz, Tolerance tolerance, DataReader.FrameType frameType)
+        public FeatureSet GetFeatures(double mz, Tolerance tolerance, DataReader.FrameType frameType)
         {
             List<IntensityPoint> intensityBlock = _uimfUtil.GetXic(mz, tolerance.GetValue(), frameType, tolerance.GetUnit());
-            var xic = new XIC(intensityBlock);
+            var xic = new FeatureSet(intensityBlock);
 
             return xic;
         }
 
-        public virtual XIC GetXic(int targetBin, DataReader.FrameType frameType)
+        public FeatureSet GetFeatures(int targetBin, DataReader.FrameType frameType)
         {
             List<IntensityPoint> intensityPointList = _uimfUtil.GetXic(targetBin, frameType);
-            var xic = new XIC(intensityPointList);
+            var xic = new FeatureSet(intensityPointList);
 
             return xic;
         }
@@ -47,6 +47,11 @@ namespace InformedProteomics.Backend.IMS
         public int GetBinFromMz(double mz)
         {
             return _uimfUtil.GetBinFromMz(mz);
+        }
+
+        public string GetFilePath()
+        {
+            return _filePath;
         }
     }
 }
