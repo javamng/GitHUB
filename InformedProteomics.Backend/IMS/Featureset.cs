@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,18 +11,18 @@ using UIMFLibrary;
 namespace InformedProteomics.Backend.IMS
 {
     [Serializable]
-    public class XIC
+    public class FeatureSet : IEnumerable<Feature>
     {
         private List<Feature> _featureList;
 
-        public XIC(List<IntensityPoint> intensityPointList)
+        public FeatureSet(List<IntensityPoint> intensityPointList)
         {
             IEnumerable<Point> pointList = WaterShedMapUtil.BuildWatershedMap(intensityPointList);
             Smoother.Smooth(ref pointList);
             FindFeatures(pointList);
         }
 
-        public XIC(double[,] intensityBlock)
+        public FeatureSet(double[,] intensityBlock)
         {
             Smoother.Smooth(ref intensityBlock); 
             FindFeatures(intensityBlock);
@@ -59,5 +60,15 @@ namespace InformedProteomics.Backend.IMS
         #endregion
 
         private static readonly SavitzkyGolaySmoother Smoother = new SavitzkyGolaySmoother(5, 2);
+
+        public IEnumerator<Feature> GetEnumerator()
+        {
+            return _featureList.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }
