@@ -8,6 +8,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
 {
     public class IonType
     {
+        public int charge { get; private set; }
         public double GetMz(Composition cutComposition)
         {
             throw new System.NotImplementedException();
