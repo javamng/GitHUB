@@ -123,11 +123,9 @@
     <Compile Include="IMSScoring\FeatureGraphScorer.cs" />
     <Compile Include="IMSScoring\FeatureNode.cs" />
     <Compile Include="IMSScoring\FragmentFeatureGraph.cs" />
-    <Compile Include="IMSScoring\FragmentFeatureGraphScorer.cs" />
     <Compile Include="IMSScoring\FragmentParameter.cs" />
     <Compile Include="IMSScoring\ImsScorer.cs" />
     <Compile Include="IMSScoring\FeatureEdge.cs" />
-    <Compile Include="IMSScoring\PrecrusorFeatureNodesScorer.cs" />
     <Compile Include="IMSScoring\ScoringParameter.cs" />
     <Compile Include="IMS\Feature.cs" />
     <Compile Include="IMS\IMSDataCached.cs" />
@@ -183,7 +181,6 @@
     <Compile Include="Utils\DtaUtil.cs" />
     <Compile Include="Utils\FragmentationUtil.cs" />
     <Compile Include="IMS\IMSData.cs" />
-    <Compile Include="IMS\IMSPrecursor.cs" />
     <Compile Include="Database\IndexedDatabase.cs" />
     <Compile Include="Database\IStringEnumerator.cs" />
     <Compile Include="Utils\PeptideEnumerator.cs" />
