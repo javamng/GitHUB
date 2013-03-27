@@ -130,7 +130,7 @@
     <Compile Include="IMSScoring\FragmentParameter.cs" />
     <Compile Include="IMSScoring\ImsScorer.cs" />
     <Compile Include="IMSScoring\FeatureEdge.cs" />
-    <Compile Include="IMSScoring\ScoringParameter.cs" />
+    <Compile Include="IMSScoring\SubScoreFactory.cs" />
     <Compile Include="IMS\Feature.cs" />
     <Compile Include="IMS\IMSDataCached.cs" />
     <Compile Include="IMS\Featureset.cs" />
