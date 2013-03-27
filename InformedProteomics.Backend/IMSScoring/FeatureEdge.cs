@@ -46,13 +46,13 @@ namespace InformedProteomics.Backend.IMSScoring
 
         private float GetWeight()
         {
-            return ScoringParameter.GetKLDivergence(LNode.IonType, RNode.IonType, _ratio, _lcCorrelation, _imsCorrelation, LNode.Parameter);
+            return ScoringParameter.GetKLDivergence(LNode.FragmentIonClassBase, RNode.FragmentIonClassBase, _ratio, _lcCorrelation, _imsCorrelation, LNode.Parameter);
         }
 
         private float GetScore(){
-            var score = ScoringParameter.GetRatioScore(LNode.IonType, RNode.IonType, _ratio, LNode.Parameter);
-            score += ScoringParameter.GetLCCorrelationScore(LNode.IonType, RNode.IonType, _lcCorrelation, LNode.Parameter);
-            score += ScoringParameter.GetIMSCorrelationScore(LNode.IonType, RNode.IonType, _imsCorrelation, LNode.Parameter);
+            var score = ScoringParameter.GetRatioScore(LNode.FragmentIonClassBase, RNode.FragmentIonClassBase, _ratio, LNode.Parameter);
+            score += ScoringParameter.GetLCCorrelationScore(LNode.FragmentIonClassBase, RNode.FragmentIonClassBase, _lcCorrelation, LNode.Parameter);
+            score += ScoringParameter.GetIMSCorrelationScore(LNode.FragmentIonClassBase, RNode.FragmentIonClassBase, _imsCorrelation, LNode.Parameter);
             
             return score;
         }
