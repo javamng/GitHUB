@@ -84,7 +84,7 @@ namespace InformedProteomics.Backend.IMSScoring
         static private List<FeatureNode> GetFragmentNodes(ImsDataCached imsData, FeatureNode precursorNode, Sequence peptide, int cutNumber)
         {
             var parameter = new FragmentParameter(peptide, cutNumber);
-            var ionTypes = ScoringParameter.GetIonTypes(parameter, precursorNode.FragmentIonClassBase.Charge);
+            var ionTypes = SubScoreFactory.GetIonTypes(parameter, precursorNode.FragmentIonClassBase.Charge);
 
             var nodes = new List<FeatureNode>();
             var prefixComposition = peptide.GetComposition(0, cutNumber);
