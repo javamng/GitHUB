@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="InformedProteomics.Backend.Data.Sequence.AminoAcidSet">
+    <Position X="2.5" Y="1" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAAAAMAAAQAAAAAAABAAAAAAACAAAAAAAAAEAA=</HashCode>
+      <FileName>Data\Sequence\AminoAcidSet.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="InformedProteomics.Backend.Data.Sequence.SequenceGraph">
+    <Position X="5.25" Y="1" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAQAAAAAAAAAQAAAAgAAAACAAAAAAAUYAAQAQAAAA=</HashCode>
+      <FileName>Data\Sequence\SequenceGraph.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="InformedProteomics.Backend.Data.Sequence.Node">
+    <Position X="8" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAACAAAAAAAQAAAAAAAAAAACAAAAAAAAAA=</HashCode>
+      <FileName>Data\Sequence\SequenceGraph.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
