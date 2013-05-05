@@ -33,6 +33,20 @@ namespace InformedProteomics.Backend.Scoring
                 return peptides;
         }
 
+        public static void Shuffle<T>(IList<T> list)
+        {
+            var rng = new Random();
+            var n = list.Count;
+            while (n > 1)
+            {
+                n--;
+                var k = rng.Next(n + 1);
+                T value = list[k];
+                list[k] = list[n];
+                list[n] = value;
+            }
+        }
+
         public static HashSet<string> GetPeptidesFromFasta(string file, bool fullyTryptic, int missedCleavageNumber, bool reverse)// very slow.. for test only
         {
             var peptides = new HashSet<string>();
@@ -50,10 +64,21 @@ namespace InformedProteomics.Backend.Scoring
                         if (reverse)
                         {
                             var revProtein = "";
-                            for (var i = 0; i < protein.Length; i++)
+
+                            var list = new List<char>();
+                            foreach (var aa in protein)
                             {
-                                revProtein += protein[protein.Length-i-1];
+                                list.Add(aa);
                             }
+                            Shuffle(list);
+
+                            //for (var i = 0; i < protein.Length; i++)
+                            //{
+                             //   revProtein += protein[protein.Length-i-1];
+                            //}
+                            foreach (var aa in list)
+                                revProtein += aa;
+
                             protein = revProtein;
                         }
                         proteins.Add(protein);
