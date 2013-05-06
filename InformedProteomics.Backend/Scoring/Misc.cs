@@ -12,7 +12,7 @@ namespace InformedProteomics.Backend.Scoring
         {
             var peptides = new HashSet<string>();
 
-            for (var sp = 0; sp < protein.Length-4; sp++)
+            for (var sp = 0; sp < protein.Length-5; sp++)
             {
                 var numKR = 0;
                 var lterm = sp == 0 || protein[sp - 1] == 'K' || protein[sp - 1] == 'R';
@@ -22,7 +22,7 @@ namespace InformedProteomics.Backend.Scoring
                     var cterm = ep == protein.Length - 1 || protein[ep] == 'K' || protein[ep] == 'R';
                     if (cterm) numKR++;
 
-                    if (ep - sp + 1 >=4 && numKR - 1 <= missedCleavageNumber &&
+                    if (ep - sp + 1 >= 5 && numKR - 1 <= missedCleavageNumber &&
                         ((fullyTryptic && lterm && cterm) || !fullyTryptic && (lterm || cterm)))
                     {
                         peptides.Add(protein.Substring(sp, ep - sp + 1));
