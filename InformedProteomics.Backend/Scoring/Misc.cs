@@ -65,20 +65,20 @@ namespace InformedProteomics.Backend.Scoring
                         {
                             var revProtein = "";
 
-                            var list = new List<char>();
+                            /*var list = new List<char>();
                             foreach (var aa in protein)
                             {
                                 list.Add(aa);
                             }
                             Shuffle(list);
-
-                            //for (var i = 0; i < protein.Length; i++)
-                            //{
-                             //   revProtein += protein[protein.Length-i-1];
-                            //}
                             foreach (var aa in list)
                                 revProtein += aa;
-
+                            */
+                            for (var i = 0; i < protein.Length; i++)
+                            {
+                                revProtein += protein[protein.Length-i-1];
+                            }
+                            
                             protein = revProtein;
                         }
                         proteins.Add(protein);
