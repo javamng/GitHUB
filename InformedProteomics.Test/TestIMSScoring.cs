@@ -65,61 +65,29 @@ namespace InformedProteomics.Test
             var targetDist = new int[1000];
             var decoyDist = new int[1000];
 
-            var highestScorePerFeature = new Dictionary<Feature, Tuple<double, bool>>(); 
+            var highestScorePerFeature = new Dictionary<Feature, Tuple<double, bool>>();
 
-            var goodPeptides = new string[]
-                {
-
-                    "ECCHGDLLECADDRADLAK",
-                    "ECFLSHKDDSPDLPK",
-                    "CFLSHKDDSPDLPK",
-                    "KPDPNTLCDEFKADEK",
-                    "CCHGDLLECADDRADLAK",
-                    "FLSHKDDSPDLPK",
-                    "CHGDLLECADDRADLAK",
-                    "SQYLQQCPFDEHVK",
-                    "FSALTPDETYVPK",
-                    "CAADDKEACFAVEGPK",
-                    "CVADESHAGCEK",
-                    "ADDKEACFAVEGPK",
-                    "LKPDPNTLCDEFK",
-                    "DDKEACFAVEGPK",
-                    "AQYLQQCPFEDHVK",
-                    "CHGDLLECADDR",
-                    "KPDPNTLCDEFK",
-                    "EYEATLEECCAK",
-                    "YICDNQDTISSK",
-                    "AADDKEACFAVEGPK",
-                    "ICDNQDTISSK",
-                    "PQVSTPTLVEVSR",
-                    "VADESHAGCEK",
-                    "KECCDKPLLEK",
-                    "DPHACYSTVFDK",
-                    "FYAPELLYYANK",
-                    "PHACYSTVFDK",
-                    "LSHKDDSPDLPK",
-                    "YLQQCPFDEHVK",
-
-
-                };
-
+            var targetTxt = @"..\..\..\TestFiles\BSA_ST.txt";
+            var decoyTxt = @"..\..\..\TestFiles\BSA_ST_Rev.txt";
 
             for (var q = 0; q < 2; q++)
             {
                 var dist = targetDist;
                 var num = 0;
-               // var pepIndex = 0;
+                var pepIndex = 0;
                 if (q != 0) dist = decoyDist;
-                foreach (var targetPeptide in  Misc.GetPeptidesFromFasta(fasta, false, 2, q != 0))
+                foreach (var targetPeptide in  Misc.GetPeptidesFromTxt(q==0? targetTxt : decoyTxt))//Misc.GetPeptidesFromFasta(fasta, false, 2, q != 0))
                     // stupid function made by kyowon.
                 {
-                   // Console.WriteLine("{0}: {1}", ++pepIndex, targetPeptide);
-                    var pep =  targetPeptide;// CACSRKNQVK"GNYKNAYYLLEPAYFYPHR";// "CCAADDKEACFAVEGPK"//targetPeptide; "QLSACKLRQK";
+                    //Console.WriteLine("{0}: {1}", ++pepIndex, targetPeptide);
+                    var pep = targetPeptide;// CACSRKNQVK"GNYKNAYYLLEPAYFYPHR";// "CCAADDKEACFAVEGPK"//targetPeptide; "QLSACKLRQK";
                     
                     var aaSet = new AminoAcidSet(Modification.Carbamidomethylation);
                     var precursorComposition = aaSet.GetComposition(pep);
                     var sequence = new Sequence(precursorComposition + Composition.H2O, pep, aaSet);
                     var maxScore = double.NegativeInfinity;
+                    var maxPortionOfExplainedFrag = 0.0;
+
                     Feature maxFeature = null;
                     for (var charge = 1; charge <= 5; charge++)
                     {
@@ -130,35 +98,38 @@ namespace InformedProteomics.Test
                             var precursorMz = precursorIon.GetIsotopeMz(i + precursorIon.Composition.GetMostAbundantIsotopeZeroBasedIndex());
                             if (precursorMz > imsData.MaxPrecursorMz || precursorMz < imsData.MinPrecursorMz) continue;
                             var precursorFeatures = imsData.GetPrecursorFeatures(precursorMz);
-                           // Console.WriteLine("Precursor: {0}, Charge: {1}\n", precursorMz, charge + "\t" + precursorComposition);
+                            //Console.WriteLine("Precursor: {0}, Charge: {1}\n", precursorMz, charge + "\t" + precursorComposition);
                             foreach (var precursorFeature in precursorFeatures)
                             {
                               //  Console.WriteLine("Precursor Feature: " + precursorFeature + "\n");
                                 var score = imsScorer.GetPrecursorScore(precursorFeature);
                              //   Console.WriteLine("Feature: " + precursorFeature);
                                // Console.WriteLine("Precursor score: " + score);
-                              //  if (score < -0.5) continue; 
+                               // if (score < -0.5) continue; 
+                                var portionExplainedFrags = 0.0;
                                 for (var cutNumber = 1; cutNumber < pep.Length; cutNumber++)
                                 {
                                     //Console.WriteLine("Cut " + cutNumber);
                                     var cutScore = imsScorer.GetCutScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
                                     //Console.WriteLine("{0} {1} {2} {3}", pep[cutNumber-1], pep[cutNumber], sequence.GetComposition(0, cutNumber), cutScore);
-                                   // var cutNodeScore = imsScorer.GetCutNodeScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
-                                   // var cutRatioScore = imsScorer.GetCutRatioScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
+                                  //  var cutNodeScore = imsScorer.GetCutNodeScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
+                                  //  var cutRatioScore = imsScorer.GetCutRatioScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
                                    // var cutLCScore = imsScorer.GetCutLcScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
                                    // var cutIMSScore = imsScorer.GetCutImsScore(pep[cutNumber - 1], pep[cutNumber], sequence.GetComposition(0, cutNumber), precursorFeature);
-                                   // Console.WriteLine(cutNumber + "\t" + cutNodeScore + "\t" + cutRatioScore + "\t" + cutLCScore + "\t" + cutIMSScore + "\t" +  cutScore);
+                                   // Console.Write(cutNumber + "\t" + cutNodeScore + "\t" + cutRatioScore + "\t" + cutLCScore + "\t" + cutIMSScore + "\t" +  cutScore);
                                     //Console.Write(cutNumber + "\t" + cutScore + "\t");
-                                    //foreach(var ion in imsScorer.supportingIonTypes) Console.Write(ion.Name+", ");
+                                    //foreach(var ion in imsScorer.supportingIonTypes) Console.Write("\t" + ion.Name+", ");
                                     //Console.WriteLine();
                                     score += cutScore;
+                                    portionExplainedFrags += imsScorer.supportingIonTypes.Count == 0 ? 0 : 1;
                                 }
                                 if (maxScore < score)
                                 {
                                     maxScore = score;
                                     maxFeature = precursorFeature;
+                                    maxPortionOfExplainedFrag = portionExplainedFrags/sequence.Count;
                                 }
-                              //  Console.WriteLine(i + " Score = " + score + "\n");
+                                //Console.WriteLine(i + " Score = " + score + "\n");
                                 //break;
                             }
                         }
@@ -179,7 +150,7 @@ namespace InformedProteomics.Test
                    
                     if (maxScore > 0)
                     {
-                        Console.WriteLine((q==0? "T" : "D") + " " + num++ + " Max Score of the peptide " + pep + " is " + maxScore);
+                        Console.WriteLine((q == 0 ? "T" : "D") + " " + num++ + " Max Score of the peptide " + pep + " is " + maxScore + " Portion of expalined fragmentation is " + maxPortionOfExplainedFrag);
                         Console.WriteLine("Corresponding max feature is " + maxFeature);
                     }
                    // break;

@@ -6,6 +6,24 @@ namespace InformedProteomics.Backend.Scoring
 {
     public class Misc
     {
+        public static List<string> GetPeptidesFromTxt(string fileName)
+        {
+            var peptides = new List<string>();
+
+            var stremaReader = new StreamReader(fileName);
+            string s;
+
+            while ((s = stremaReader.ReadLine()) != null)
+            {
+                s = s.Replace("C!", "C");
+                s = s.Substring(s.IndexOf('.') + 1, s.LastIndexOf('.') - s.IndexOf('.') - 1);
+                peptides.Add(s);
+            }
+
+            stremaReader.Close();
+            return peptides;
+        } 
+
 
         public static IEnumerable<string> GetPeptidesFromProtein(string protein, bool fullyTryptic,
                                                               int missedCleavageNumber)
