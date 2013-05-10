@@ -206,7 +206,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Database\ProteinDatabase.cs" />
     <Compile Include="Database\FastaDatabase.cs" />
-    <Compile Include="Utils\SequenceEnumerator.cs" />
+    <Compile Include="Utils\ISequenceEnumerator.cs" />
     <Compile Include="IMS\XICPeak.cs" />
     <Compile Include="IMS\XICProfile.cs" />
   </ItemGroup>
@@ -231,6 +231,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
