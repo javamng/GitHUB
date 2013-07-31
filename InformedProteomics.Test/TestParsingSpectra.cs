@@ -27,25 +27,25 @@ namespace InformedProteomics.Test
             //var run = new RunFactory().CreateRun(specFilePath);
             var run = new XCaliburRun(specFilePath);
 
-            for (var scanNum = run.MinLcScan; scanNum <= run.MaxLcScan; scanNum++)
-            {
-                run.GetMassSpectrum(scanNum);
-            }
-
-            //const int scanNum = 810;
-            //var spec = run.GetMassSpectrum(scanNum) as ProductSpectrum;
-            //if (spec != null)
+            //for (var scanNum = run.MinLcScan; scanNum <= run.MaxLcScan; scanNum++)
             //{
-            //    spec.Display();
-            //    var precursorInfo = spec.PrecursorInfo;
-            //    Console.WriteLine("ActivationMethod: {0}", spec.ActivationMethod);
-            //    Console.WriteLine("PrecursorScan: {0}", precursorInfo.PrecursorScan);
-            //    Console.WriteLine("IsolationWindowTargetMz: {0}", precursorInfo.IsolationWindowTargetMz);
-            //    Console.WriteLine("IsolationWindowLowerOffset: {0}", precursorInfo.IsolationWindowLowerOffset);
-            //    Console.WriteLine("IsolationWindowUpperOffset: {0}", precursorInfo.IsolationWindowUpperOffset);
-            //    Console.WriteLine("MsLevel: {0}", run.GetMsLevel(scanNum));
-            //    Console.WriteLine("IsCentroidScan: {0}", run.IsCentroidScan(scanNum));
+            //    run.GetMassSpectrum(scanNum);
             //}
+
+            const int scanNum = 810;
+            var spec = run.GetMassSpectrum(scanNum) as ProductSpectrum;
+            if (spec != null)
+            {
+                spec.Display();
+                var precursorInfo = spec.PrecursorInfo;
+                Console.WriteLine("ActivationMethod: {0}", spec.ActivationMethod);
+                Console.WriteLine("PrecursorScan: {0}", precursorInfo.PrecursorScan);
+                Console.WriteLine("IsolationWindowTargetMz: {0}", precursorInfo.IsolationWindowTargetMz);
+                Console.WriteLine("IsolationWindowLowerOffset: {0}", precursorInfo.IsolationWindowLowerOffset);
+                Console.WriteLine("IsolationWindowUpperOffset: {0}", precursorInfo.IsolationWindowUpperOffset);
+                Console.WriteLine("MsLevel: {0}", run.GetMsLevel(scanNum));
+                Console.WriteLine("IsCentroidScan: {0}", run.IsCentroidScan(scanNum));
+            }
 
             var sec = (double)sw.ElapsedTicks / (double)System.Diagnostics.Stopwatch.Frequency;
             Console.WriteLine(@"Done. {0:f4} sec", sec);

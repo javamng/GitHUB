@@ -84,6 +84,10 @@
     <Reference Include="DeconTools.Workflows">
       <HintPath>..\lib\DeconTools\$(Platform)\DeconTools.Workflows.dll</HintPath>
     </Reference>
+    <Reference Include="Interop.MSFileReaderLib">
+      <HintPath>..\lib\x64\Interop.MSFileReaderLib.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
     <Reference Include="MathNet.Numerics, Version=2.3.0.25, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\MathNet.Numerics.dll</HintPath>
@@ -238,17 +242,6 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="MSFileReaderLib">
-      <Guid>{F0C5F3E3-4F2A-443E-A74D-0AABE3237494}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
