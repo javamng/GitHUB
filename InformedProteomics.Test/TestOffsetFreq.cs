@@ -9,7 +9,6 @@ using InformedProteomics.Backend.Data.Spectrometry;
 using InformedProteomics.Backend.MassSpecData;
 using InformedProteomics.Backend.Utils;
 using NUnit.Framework;
-using FileHandlers;
 
 namespace InformedProteomics.Test
 {
