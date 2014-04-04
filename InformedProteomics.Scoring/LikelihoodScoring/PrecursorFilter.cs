@@ -30,25 +30,6 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
             _precursorIonTypes = ionTypeFactory.GetAllKnownIonTypes().ToList();
         }
 
-        private List<Peak> FilterNoisePeaks(List<Peak> peaks, double mz)
-        {
-            double minMz = mz - _searchWidth;
-            double maxMz = mz + _searchWidth;
-            var searchSpace = peaks.Where(peak => peak.Mz >= minMz && peak.Mz <= maxMz).ToList();
-            searchSpace.Sort(new ComparePeakByIntensity());
-
-            if (searchSpace.Count > _retentionCount)
-            {
-                var removals = searchSpace.GetRange(_retentionCount, searchSpace.Count - _retentionCount);
-
-                foreach (var removal in removals)
-                {
-                    peaks.Remove(removal);
-                }
-            }
-            return peaks;
-        }
-
         private SpectrumMatch Filter(SpectrumMatch specMatch, bool filterNoise)
         {
             var charge = specMatch.PrecursorCharge;
@@ -61,7 +42,7 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
                 var mz = ion.GetMonoIsotopicMz();
 
                 if (filterNoise)
-                    peaks = FilterNoisePeaks(peaks, mz);
+                    peaks = (SpectrumFilter.FilterNoisePeaks(specMatch.Spectrum)).Peaks.ToList();
 
                 var offsets = offsetLists.GetChargeOffsets(i + 1);
 
@@ -89,14 +70,6 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
                 matches[i] = Filter(matches[i], filterNoise);
             }
             return matches;
-        }
-    }
-
-    class ComparePeakByIntensity : IComparer<Peak>
-    {
-        public int Compare(Peak x, Peak y)
-        {
-            return x.Intensity.CompareTo(y.Intensity);
         }
     }
 }
