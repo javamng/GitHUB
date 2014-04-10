@@ -105,6 +105,7 @@
     <Compile Include="TestIcTopDown.cs" />
     <Compile Include="TestIMSScoring.cs" />
     <Compile Include="TestIpa.cs" />
+    <Compile Include="TestMassError.cs" />
     <Compile Include="TestMisc.cs" />
     <Compile Include="TestIonFrequency.cs" />
     <Compile Include="TestOffsetFrequency.cs" />

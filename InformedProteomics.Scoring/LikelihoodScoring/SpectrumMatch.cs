@@ -63,13 +63,7 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
         public string GetCleanPeptide()
         {
             var aaset = new AminoAcidSet();
-            var cleanPeptide = "";
-            foreach (var aminoacid in Peptide)
-            {
-                if (aaset.GetAminoAcid(aminoacid) != null)
-                    cleanPeptide += aminoacid;
-            }
-            return cleanPeptide;
+            return Peptide.Where(aminoacid => aaset.GetAminoAcid(aminoacid) != null).Aggregate("", (current, aminoacid) => current + aminoacid);
         }
 
         public string GetPeptidePrefix()
@@ -132,11 +126,11 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
             return compositions.Select(ionType.GetIon).ToList();
         }
 
-        public IonProbability ContainsCleavageIons(IonType ionType, Tolerance tolerance, double relativeIntensityThreshold)
+        public Probability<string> ContainsCleavageIons(IonType ionType, Tolerance tolerance, double relativeIntensityThreshold)
         {
             var ions = GetCleavageIons(ionType);
 
-            var probability = new IonProbability(ionType.Name);
+            var probability = new Probability<string>(ionType.Name);
             foreach (var ion in ions)
             {
                 probability.Total++;

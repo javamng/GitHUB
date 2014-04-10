@@ -18,9 +18,20 @@ namespace InformedProteomics.Test
         private string _preTsv;
         private string _preRaw;
         private string _outPre;
-        private string _outFileName;
         private int _maxRanks;
         private double _relativeIntensityThreshold;
+
+        private bool _writeIonProbabilities;
+        private string _ionProbabilityOutFileName;
+
+        private bool _writeRankProbabilities;
+        private string _rankProbabilityOutFileName;
+
+        private bool _writePrecursorOffsetProbabilities;
+        private string _precursorOffsetProbabilityOutFileName;
+
+        private bool _writeMassErrorProbabilities;
+        private string _massErrorProbabilityOutFileName;
 
         private List<IonType> _ionTypes;
         private double _selectedIonThreshold;
@@ -103,9 +114,37 @@ namespace InformedProteomics.Test
                     var selected = ionFrequencyTables[j].SelectIons(_selectedIonThreshold);
                     foreach (var selectedIonProb in selected)
                     {
-                        _selectedIons[j].Add(_ionTypeFactory.GetIonType(selectedIonProb.IonName));
+                        _selectedIons[j].Add(_ionTypeFactory.GetIonType(selectedIonProb.DataLabel));
                     }
                     _unselectedIons[j] = _ionTypes.Except(_selectedIons[j]).ToList();
+                }
+
+                // Create Mass Error tables and Ion Pair Frequency tables
+                var selectedMassErrors = new List<Probability<double>>[_precursorCharge, _selectedIons.Length];
+                var selectedIonPairFrequencies = new List<Probability<IonPairFound>>[_precursorCharge, _selectedIons.Length];
+                var unselectedMassErrors = new List<Probability<double>>[_precursorCharge, _unselectedIons.Length];
+                var unselectedIonPairFrequencies = new List<Probability<IonPairFound>>[_precursorCharge, _unselectedIons.Length];
+                for (int i = 0; i < _precursorCharge; i++)
+                {
+                    var chargeMatches = matchList.GetCharge(i + 1);
+                    // create tables for selected ions
+                    var selectedMassErrorTables = new MassErrorTable[_selectedIons.Length];
+                    for (int j = 0; j < _selectedIons.Length; j++)
+                    {
+                        selectedMassErrorTables[j] = new MassErrorTable(new[] { _selectedIons[i][j] }, _defaultTolerance);
+                        selectedMassErrorTables[j].AddMatches(chargeMatches);
+                        selectedMassErrors[i, j] = selectedMassErrorTables[j].MassError;
+                        selectedIonPairFrequencies[i, j] = selectedMassErrorTables[j].IonPairFrequency;
+                    }
+                    // create tables for unselected ions
+                    var unselectedMassErrorTables = new MassErrorTable[_unselectedIons.Length];
+                    for (int j = 0; j < _unselectedIons.Length; j++)
+                    {
+                        unselectedMassErrorTables[j] = new MassErrorTable(new[] { _unselectedIons[i][j] }, _defaultTolerance);
+                        unselectedMassErrorTables[j].AddMatches(chargeMatches);
+                        unselectedMassErrors[i, j] = unselectedMassErrorTables[j].MassError;
+                        unselectedIonPairFrequencies[i, j] = unselectedMassErrorTables[j].IonPairFrequency;
+                    }
                 }
 
                 // Initialize precursor filter
@@ -122,18 +161,54 @@ namespace InformedProteomics.Test
                     rankTables[j].RankMatches(chargeMatches, _defaultTolerance);
                 }
 
-                // Write output files
-                var outFileName = _outFileName.Replace("@", name);
-                for (int charge = 0; charge < _precursorCharge; charge++)
+                // Write ion probability output files
+                if (_writeIonProbabilities)
                 {
-                    var outFileCharge = outFileName.Replace("*", (charge + 1).ToString(CultureInfo.InvariantCulture));
-                    var ionProbabilities = rankTables[charge].IonProbabilities;
-                    WriteRankProbabilities(ionProbabilities, charge, rankTables[charge].TotalRanks, outFileCharge);
+                    var outFile = _ionProbabilityOutFileName.Replace("@", name);
+                    for (int i = 0; i < _precursorCharge; i++)
+                    {
+                        string outFileName = outFile.Replace("*", (i + 1).ToString(CultureInfo.InvariantCulture));
+                        var ionProbabilities = ionFrequencyTables[i].IonProbabilityTable;
+                        using (var finalOutputFile = new StreamWriter(outFileName))
+                        {
+                            finalOutputFile.WriteLine("Ion\tTarget");
+                            foreach (var ionProbability in ionProbabilities)
+                            {
+                                finalOutputFile.WriteLine("{0}\t{1}", ionProbability.DataLabel, ionProbability.Prob);
+                            }
+                        }
+                    }
+                }
+
+                // Write rank probability output files
+                if (_writeRankProbabilities)
+                {
+                    var outFileName = _rankProbabilityOutFileName.Replace("@", name);
+                    for (int charge = 0; charge < _precursorCharge; charge++)
+                    {
+                        var chargeOutFileName = outFileName.Replace("*",
+                            (charge + 1).ToString(CultureInfo.InvariantCulture));
+                        var ionProbabilities = rankTables[charge].IonProbabilities;
+                        WriteRankProbabilities(ionProbabilities, charge, rankTables[charge].TotalRanks,
+                            chargeOutFileName);
+                    }
+                }
+
+                // Write precursor offset probability output files
+                if (_writePrecursorOffsetProbabilities)
+                {
+
+                }
+
+                // Write mass error probability output files
+                if (_writeMassErrorProbabilities)
+                {
+
                 }
             }
         }
 
-        private void WriteRankProbabilities(List<Dictionary<IonType, IonProbability>> ionProbabilities, int charge, int totalRanks, string outFileCharge)
+        private void WriteRankProbabilities(IList<Dictionary<IonType, Probability<string>>> ionProbabilities, int charge, int totalRanks, string outFileCharge)
         {
             using (var outFile = new StreamWriter(outFileCharge))
             {
@@ -275,8 +350,22 @@ namespace InformedProteomics.Test
             _preRaw = fileInfo.Contents["rawpath"];
             var outPathtemp = fileInfo.Contents["outpath"];
             _outPre = outPathtemp;
-            var outFiletemp = fileInfo.Contents["outfile"];
-            _outFileName = _outPre + outFiletemp;
+
+            _writeIonProbabilities = fileInfo.Contents.ContainsKey("ionProbabilityOutput");
+            if (_writeIonProbabilities)
+                _ionProbabilityOutFileName = _outPre + fileInfo.Contents["ionProbabilityOutput"];
+
+            _writeRankProbabilities = fileInfo.Contents.ContainsKey("rankProbabilityOutput");
+            if (_writeRankProbabilities)
+                _rankProbabilityOutFileName = _outPre + fileInfo.Contents["rankProbabilityOutput"];
+
+            _writePrecursorOffsetProbabilities = fileInfo.Contents.ContainsKey("precursorOffsetProbabilityOutput");
+            if (_writePrecursorOffsetProbabilities)
+                _precursorOffsetProbabilityOutFileName = _outPre + fileInfo.Contents["precursorOffsetProbabilityOutput"];
+
+            _writeMassErrorProbabilities = fileInfo.Contents.ContainsKey("massErrorProbabilityOutput");
+            if (_writeMassErrorProbabilities)
+                _massErrorProbabilityOutFileName = _outPre + fileInfo.Contents["massErrorProbabilityOutput"];
         }
     }
 }
