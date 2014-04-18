@@ -105,7 +105,6 @@
     <Compile Include="TestIcTopDown.cs" />
     <Compile Include="TestIMSScoring.cs" />
     <Compile Include="TestIpa.cs" />
-    <Compile Include="TestMassError.cs" />
     <Compile Include="TestMisc.cs" />
     <Compile Include="TestIonFrequency.cs" />
     <Compile Include="TestOffsetFrequency.cs" />
@@ -113,8 +112,8 @@
     <Compile Include="FunctionalTests\TestProteoWizardWrapper.cs" />
     <Compile Include="FunctionalTests\TestSequenceGraph.cs" />
     <Compile Include="FunctionalTests\TestSuffixArray.cs" />
-    <Compile Include="TestRankCorrelation.cs" />
     <Compile Include="TestRankPeakProbability.cs" />
+    <Compile Include="TestSequence.cs" />
     <Compile Include="TestSpectrumCaching.cs" />
     <Compile Include="TestTopDownMs1Scoring.cs" />
     <Compile Include="TestUtils.cs" />
