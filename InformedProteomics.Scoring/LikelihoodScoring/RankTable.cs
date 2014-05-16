@@ -65,7 +65,7 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
 
         public void Smooth(int window, int startRank=0, int endRank=Int32.MaxValue)
         {
-            endRank = Math.Min(endRank, MaxRanks-1);
+            endRank = Math.Min(endRank, MaxRanks);
             startRank = Math.Max(startRank, 0);
             for (int currRank = startRank; currRank < endRank; currRank+=window)
             {
@@ -111,6 +111,7 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
 
         public RankProbability GetRank(int rankNum)
         {
+            rankNum--;
             if (rankNum >= MaxRanks)
                 rankNum = MaxRanks - 1;
             return (rankNum > 0 ? _rankTable[rankNum] : NotFound);
