@@ -111,7 +111,6 @@ namespace InformedProteomics.Scoring.LikelihoodScoring
 
         public RankProbability GetRank(int rankNum)
         {
-            rankNum--;
             if (rankNum >= MaxRanks)
                 rankNum = MaxRanks - 1;
             return (rankNum > 0 ? _rankTable[rankNum] : NotFound);
