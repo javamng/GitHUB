@@ -107,7 +107,7 @@
     <Compile Include="TestBottomUpScoring.cs" />
     <Compile Include="TestIcBottomUp.cs" />
     <Compile Include="Obsolete\TestIcIms.cs" />
-    <Compile Include="TestIcFileReader.cs" />
+    <Compile Include="TestTopDownViewer.cs" />
     <Compile Include="TestIcTopDown.cs" />
     <Compile Include="Obsolete\TestIMSScoring.cs" />
     <Compile Include="Obsolete\TestIpa.cs" />
