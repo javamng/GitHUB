@@ -375,6 +375,18 @@ namespace InformedProteomics.Backend.Data.Sequence
 
         protected Composition.Composition GetComposition(int seqIndex, int modIndex)
         {
+            if (_nodeComposition[seqIndex, modIndex] == null)
+            {
+                var node = _graph[seqIndex][modIndex];
+                _nodeComposition[seqIndex, modIndex] = _suffixComposition[seqIndex] +
+                                  _modificationParams.GetModificationCombination(node.ModificationCombinationIndex)
+                                                     .Composition;
+            }
+            return _nodeComposition[seqIndex, modIndex];
+        }
+
+        protected Composition.Composition GetComplementaryComposition(int seqIndex, int modIndex)
+        {
             if (_compNodeComposition[seqIndex, modIndex] == null)
             {
                 var nodeComposition = GetComposition(seqIndex, modIndex);
