@@ -36,6 +36,8 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
     <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -172,6 +174,7 @@
     <Compile Include="Database\IndexedDatabase.cs" />
     <Compile Include="Utils\AnonymousComparer.cs" />
     <Compile Include="Utils\Centroider.cs" />
+    <Compile Include="Utils\CubicSpline.cs" />
     <Compile Include="Utils\FdrCalculator.cs" />
     <Compile Include="Utils\FitScoreCalculator.cs" />
     <Compile Include="Utils\ListUtil.cs" />
@@ -183,11 +186,13 @@
     <Compile Include="Database\ProteinDatabase.cs" />
     <Compile Include="Database\FastaDatabase.cs" />
     <Compile Include="Utils\SimpleStringProcessing.cs" />
+    <Compile Include="Utils\TriDiagonalMatrix.cs" />
     <Compile Include="Utils\TsvFileParser.cs" />
     <Compile Include="Utils\VennDiagram.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">
