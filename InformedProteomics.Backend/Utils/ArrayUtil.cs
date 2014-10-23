@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace InformedProteomics.Backend.Utils
@@ -13,7 +12,7 @@ namespace InformedProteomics.Backend.Utils
         /// </summary>
         /// <param name="array">The array</param>
         /// <param name="format">Optional. A string to use to format each value. Must contain the colon, so something like ':0.000'</param>
-        public static string ToString<T>(T[] array, string deliminator = "\t", string format = "")
+        public static string ToString<T>(T[] array, string format = "")
         {
             var s = new StringBuilder();
             var formatString = "{0" + format + "}";
@@ -22,7 +21,7 @@ namespace InformedProteomics.Backend.Utils
             {
                 if (i < array.Length - 1)
                 {
-                    s.AppendFormat(formatString + deliminator, array[i]);
+                    s.AppendFormat(formatString + ", ", array[i]);
                 }
                 else
                 {
@@ -32,74 +31,9 @@ namespace InformedProteomics.Backend.Utils
 
             return s.ToString();
         }
-
-        public static string ToString<T>(T[][] array, string deliminator = "\t", string format = "")
-        {
-            var s = new StringBuilder();
-            var formatString = "{0" + format + "}";
-
-            for (var i = 0; i < array.Length; i++)
-            {
-                for (var j = 0; j < array[i].Length; j++)
-                {
-                    if (j < array[i].Length - 1)
-                    {
-                        s.AppendFormat(formatString + deliminator, array[i][j]);
-                    }
-                    else
-                    {
-                        s.AppendFormat(formatString, array[i][j]);
-                    }                    
-                }
-                s.Append("\n");
-            }
-
-            return s.ToString();
-        }
-
-        public static int[] GetRankings(IEnumerable<double> values, double lowerBoundValue = 0.0d)
-        {
-            var temp = new List<KeyValuePair<double, int>>();
-            var i = 0;
-            foreach (var v in values)
-            {
-                if (v > lowerBoundValue) temp.Add(new KeyValuePair<double, int>(v, i));
-                i++;
-            }
-
-            var ranking = 1;
-            var rankingList = new int[i];
-            foreach (var t in temp.OrderByDescending(x => x.Key))
-            {
-                rankingList[t.Value] = ranking++;
-            }
-            return rankingList;
-        }
-
-        public static int[] GetRankings(IEnumerable<double> values, out double median, double lowerBoundValue = 0.0d)
-        {
-            var temp = new List<KeyValuePair<double, int>>();
-            var i = 0;
-            foreach (var v in values)
-            {
-                if (v > lowerBoundValue) temp.Add(new KeyValuePair<double, int>(v, i));
-                i++;
-            }
-
-            var ranking = 1;
-            var rankingList = new int[i];
-            var medianRanking = (int)Math.Max(Math.Round(0.5*i), 1);
-            median = 0;
-            foreach (var t in temp.OrderByDescending(x => x.Key))
-            {
-                if (ranking == medianRanking) median = t.Key;
-                rankingList[t.Value] = ranking++;
-            }
-            return rankingList;
-        }
-
+        
         // Kadane's algorithm
-        public static int MaxSumSubarray(IList<int> a, out int start, out int len)
+        static int MaxSumSubarray(IList<int> a, out int start, out int len)
         {
             start = 0;
             len = 1;
@@ -135,7 +69,7 @@ namespace InformedProteomics.Backend.Utils
             return sum;
         }
         // Kadane's algorithm
-        public static double MaxSumSubarray(IList<double> a, out int start, out int len)
+        static double MaxSumSubarray(IList<double> a, out int start, out int len)
         {
             start = 0;
             len = 1;
