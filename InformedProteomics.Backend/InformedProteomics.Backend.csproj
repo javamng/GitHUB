@@ -80,9 +80,12 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MathNet.Numerics, Version=2.5.0.27, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="MathNet.Numerics, Version=2.3.0.25, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\MathNet.Numerics.dll</HintPath>
+    </Reference>
+    <Reference Include="MultiDimensionalPeakFinding">
+      <HintPath>..\lib\x64\MultiDimensionalPeakFinding.dll</HintPath>
     </Reference>
     <Reference Include="MwtWinDll">
       <HintPath>..\lib\MwtWinDll.dll</HintPath>
@@ -93,6 +96,22 @@
     <Reference Include="ProteowizardWrapper, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\x64\ProteowizardWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\x64\QuickGraph.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Data, Version=3.6.61114.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\x64\QuickGraph.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Graphviz, Version=3.6.61114.0, Culture=neutral, PublicKeyToken=f3fb40175eec2af3, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\x64\QuickGraph.Graphviz.dll</HintPath>
+    </Reference>
+    <Reference Include="QuickGraph.Serialization, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\lib\x64\QuickGraph.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="SAIS">
       <HintPath>..\lib\x64\SAIS.dll</HintPath>
@@ -111,32 +130,20 @@
   <ItemGroup>
     <Compile Include="Database\PeptideEnumerator.cs" />
     <Compile Include="Database\AnnotationAndOffset.cs" />
-    <Compile Include="Database\SearchableDatabase.cs" />
     <Compile Include="Data\Biology\Constants.cs" />
     <Compile Include="Data\Composition\Averagine.cs" />
-    <Compile Include="Data\Composition\AbstractComposition.cs" />
-    <Compile Include="Data\Composition\CompositionWithDeltaMass.cs" />
-    <Compile Include="Data\Composition\IsoProfilePredictor.cs" />
     <Compile Include="Data\Composition\IsotopomerEnvelope.cs" />
     <Compile Include="Data\Sequence\Cleavage.cs" />
     <Compile Include="Data\Sequence\ISequenceTagGenerator.cs" />
-    <Compile Include="Data\Sequence\ModificationInstance.cs" />
-    <Compile Include="Data\Sequence\ShiftedSequenceGraph.cs" />
     <Compile Include="Data\Spectrometry\ActivationMethod.cs" />
-    <Compile Include="Data\Spectrometry\IMs1Feature.cs" />
-    <Compile Include="Data\Spectrometry\LcMsChargeMap.cs" />
-    <Compile Include="Data\Spectrometry\ISequenceFilter.cs" />
+    <Compile Include="Data\Spectrometry\ChargeLcScanMatrix.cs" />
+    <Compile Include="Data\Spectrometry\ChargeScanRange.cs" />
     <Compile Include="Data\Spectrometry\DeconvolutedPeak.cs" />
     <Compile Include="Data\Spectrometry\Deconvoluter.cs" />
-    <Compile Include="Data\Spectrometry\Ms1Feature.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureAlign.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureCluster.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureContainer.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureMatrix.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureResult.cs" />
-    <Compile Include="Data\Spectrometry\Ms1FeatureScore.cs" />
-    <Compile Include="Data\Spectrometry\Ms1Spectrum.cs" />
+    <Compile Include="Data\Spectrometry\ILcMsMap.cs" />
+    <Compile Include="Data\Spectrometry\Ms1FeatureExtractor.cs" />
     <Compile Include="Data\Spectrometry\Ms2DetectorType.cs" />
+    <Compile Include="Data\Spectrometry\ISequenceFilter.cs" />
     <Compile Include="Data\Spectrometry\IsolationWindow.cs" />
     <Compile Include="Data\Spectrometry\Isotope.cs" />
     <Compile Include="Data\Spectrometry\LcMsMatchMap.cs" />
@@ -159,19 +166,6 @@
     <Compile Include="Data\Spectrometry\IScorer.cs" />
     <Compile Include="Data\Spectrometry\Xic.cs" />
     <Compile Include="Data\Spectrometry\XicPoint.cs" />
-    <Compile Include="MassFeature\IdentifiedProtein.cs" />
-    <Compile Include="MassFeature\IsotopeEnvelope.cs" />
-    <Compile Include="MassFeature\LcMsFeature.cs" />
-    <Compile Include="MassFeature\LcMsFeatureAlignment.cs" />
-    <Compile Include="MassFeature\LcMsFeatureContainer.cs" />
-    <Compile Include="MassFeature\LcMsFeatureScorer.cs" />
-    <Compile Include="MassFeature\LcMsFeatureScore.cs" />
-    <Compile Include="MassFeature\LcMsFeatureTrain.cs" />
-    <Compile Include="MassFeature\LcMsPeakCluster.cs" />
-    <Compile Include="MassFeature\LcMsPeakScorer.cs" />
-    <Compile Include="MassFeature\LcMsPeakMatrix.cs" />
-    <Compile Include="MassFeature\ObservedIsotopeEnvelope.cs" />
-    <Compile Include="MassFeature\TheoreticalIsotopeEnvelope.cs" />
     <Compile Include="MassSpecData\LcMsRun.cs" />
     <Compile Include="MassSpecData\MzMLReader.cs" />
     <Compile Include="MassSpecData\IChromatogramExtractor.cs" />
@@ -200,14 +194,10 @@
     <Compile Include="Data\Spectrometry\Fragment.cs" />
     <Compile Include="Data\Spectrometry\Peak.cs" />
     <Compile Include="Database\IndexedDatabase.cs" />
-    <Compile Include="Quantification\TargetFeature.cs" />
-    <Compile Include="Quantification\TargetMs1FeatureMatrix.cs" />
-    <Compile Include="SequenceTag\GraphEdge.cs" />
+    <Compile Include="SequenceTag\CandidatePathManager.cs" />
     <Compile Include="SequenceTag\IdentifiedSequenceTag.cs" />
-    <Compile Include="SequenceTag\SequenceTag.cs" />
+    <Compile Include="SequenceTag\ScoringFunction.cs" />
     <Compile Include="SequenceTag\SequenceTagFinder.cs" />
-    <Compile Include="SequenceTag\SequenceTagGraph.cs" />
-    <Compile Include="SequenceTag\SequenceTagGraphEdge.cs" />
     <Compile Include="Utils\AnonymousComparer.cs" />
     <Compile Include="Utils\ArrayUtil.cs" />
     <Compile Include="Utils\Centroider.cs" />
@@ -218,11 +208,11 @@
     <Compile Include="Utils\IntRange.cs" />
     <Compile Include="Utils\ListUtil.cs" />
     <Compile Include="Utils\Misc.cs" />
-    <Compile Include="Utils\OtsuThreshold.cs" />
+    <Compile Include="Utils\NoiseFilter.cs" />
     <Compile Include="Utils\PeakListUtils.cs" />
-    <Compile Include="Utils\SavitzkyGolaySmoother.cs" />
     <Compile Include="Utils\SimpleMath.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Database\ProteinDatabase.cs" />
     <Compile Include="Database\FastaDatabase.cs" />
     <Compile Include="Utils\SimpleStringProcessing.cs" />
     <Compile Include="Utils\TriDiagonalMatrix.cs" />
@@ -251,15 +241,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="EDAL">
-      <Guid>{8E79B9A2-107E-4E91-A0FF-01F2591103F3}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
     <COMReference Include="MSFileReaderLib">
       <Guid>{F0C5F3E3-4F2A-443E-A74D-0AABE3237494}</Guid>
       <VersionMajor>1</VersionMajor>
@@ -270,7 +251,6 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
