@@ -5,9 +5,9 @@ using InformedProteomics.Backend.Database;
 
 namespace InformedProteomics.TopDown.Execution
 {
-    public class DatabaseSequenceSpectrumMatch: IComparable<DatabaseSequenceSpectrumMatch>
+    public class SequenceSpectrumMatch: IComparable<SequenceSpectrumMatch>
     {
-        public DatabaseSequenceSpectrumMatch(string sequence, char pre, char post, int scanNum, long offset, 
+        public SequenceSpectrumMatch(string sequence, char pre, char post, int scanNum, long offset, 
             int numNTermCleavages, ModificationCombination modifications, Ion ion, double score, double ms1Corr = 0.0)
         {
             Sequence = sequence;
@@ -43,7 +43,7 @@ namespace InformedProteomics.TopDown.Execution
             get { return Post == '-' ? AminoAcid.ProteinCTerm : AminoAcid.PeptideCTerm; }
         }
 
-        public int CompareTo(DatabaseSequenceSpectrumMatch other)
+        public int CompareTo(SequenceSpectrumMatch other)
         {
             return Score.CompareTo(other.Score);
         }

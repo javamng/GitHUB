@@ -64,9 +64,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\lib\DeconTools\$(Platform)\DeconTools.Backend.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics, Version=3.2.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\MathNet.Numerics.3.2.3\lib\net40\MathNet.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics">
+      <HintPath>..\lib\MathNet.Numerics.dll</HintPath>
     </Reference>
     <Reference Include="MultiDimensionalPeakFinding">
       <HintPath>..\lib\x64\MultiDimensionalPeakFinding.dll</HintPath>
@@ -83,7 +82,6 @@
       <HintPath>..\lib\$(Platform)\System.Data.SQLite.dll</HintPath>
     </Reference>
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -94,12 +92,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FunctionalTests\TestAminoAcidSet.cs" />
     <Compile Include="FunctionalTests\TestInformedTopDownScoring.cs" />
-    <Compile Include="FunctionalTests\TestReadingProMex.cs" />
-    <Compile Include="FunctionalTests\TestSpectrumMethods.cs" />
-    <Compile Include="FunctionalTests\TestTopDownConsole.cs" />
     <Compile Include="FunctionalTests\TestTopDownDeconvolution.cs" />
+    <Compile Include="TestChargeLcScanMatrix.cs" />
     <Compile Include="FunctionalTests\TestMzMLReader.cs" />
     <Compile Include="FunctionalTests\TestFdrCalculation.cs" />
     <Compile Include="FunctionalTests\TestFitScore.cs" />
@@ -115,14 +110,10 @@
     <Compile Include="Obsolete\TestEdrn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestBottomUpScoring.cs" />
-    <Compile Include="TestFastProteinId.cs" />
-    <Compile Include="TestFeatureBasedSearch.cs" />
     <Compile Include="TestIcBottomUp.cs" />
     <Compile Include="Obsolete\TestIcIms.cs" />
     <Compile Include="TestIcTopDown.cs" />
     <Compile Include="Obsolete\TestIMSScoring.cs" />
-    <Compile Include="TestIprg.cs" />
-    <Compile Include="TestLcMsFeatureFind.cs" />
     <Compile Include="TestLcMsMap.cs" />
     <Compile Include="TestMisc.cs" />
     <Compile Include="TestIonFrequency.cs" />
@@ -133,15 +124,11 @@
     <Compile Include="FunctionalTests\TestSequenceGraph.cs" />
     <Compile Include="FunctionalTests\TestSuffixArray.cs" />
     <Compile Include="TestLcMsCaching.cs" />
-    <Compile Include="TestProMex.cs" />
     <Compile Include="TestRankProbability.cs" />
     <Compile Include="TestRankScore.cs" />
     <Compile Include="Obsolete\TestTopDownMs1Scoring.cs" />
     <Compile Include="TestResults.cs" />
-    <Compile Include="TestSelectivityScore.cs" />
     <Compile Include="TestSequenceTagFinder.cs" />
-    <Compile Include="TestSequenceTagMatching.cs" />
-    <Compile Include="TestTagBasedSearch.cs" />
     <Compile Include="TestUtils.cs" />
     <Compile Include="TestYufengData.cs" />
   </ItemGroup>
@@ -177,14 +164,6 @@
     <ProjectReference Include="..\PbfGen\PbfGen.csproj">
       <Project>{b31c2ac2-88c6-43c9-b809-26b7547592ff}</Project>
       <Name>PbfGen</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SelectivityScore\SelectivityScore.csproj">
-      <Project>{19658c05-ef09-404d-959f-ef9a6029013b}</Project>
-      <Name>SelectivityScore</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TopDownConsole\MSPathFinderT.csproj">
-      <Project>{dfbecbac-7fda-4c78-9f4e-cc21c79a6db6}</Project>
-      <Name>MSPathFinderT</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

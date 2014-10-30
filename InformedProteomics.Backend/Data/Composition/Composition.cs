@@ -7,7 +7,6 @@ using InformedProteomics.Backend.Data.Biology;
 
 namespace InformedProteomics.Backend.Data.Composition
 {
-    [Serializable]
     public class Composition: AbstractComposition
     {
         public static readonly Composition Zero = new Composition(0, 0, 0, 0, 0);
@@ -156,28 +155,27 @@ namespace InformedProteomics.Backend.Data.Composition
 
 
         #region Operators
-
-        protected Composition AddComposition(Composition c)
+        public static Composition operator +(Composition c1, Composition c2)
         {
-            var numC = _c + c._c;
-            var numH = _h + c._h;
-            var numN = _n + c._n;
-            var numO = _o + c._o;
-            var numS = _s + c._s;
-            var numP = _p + c._p;
+            var numC = c1._c + c2._c;
+            var numH = c1._h + c2._h;
+            var numN = c1._n + c2._n;
+            var numO = c1._o + c2._o;
+            var numS = c1._s + c2._s;
+            var numP = c1._p + c2._p;
 
-            if (_additionalElements == null && c._additionalElements == null)
+            if (c1._additionalElements == null && c2._additionalElements == null)
                 return new Composition(numC, numH, numN, numO, numS, numP);
 
             Dictionary<Atom, short> additionalElements = null;
-            if (_additionalElements != null && c._additionalElements != null)
+            if (c1._additionalElements != null && c2._additionalElements != null)
             {
-                additionalElements = new Dictionary<Atom, short>(_additionalElements);
-                foreach (var element in c._additionalElements)
+                additionalElements = new Dictionary<Atom, short>(c1._additionalElements);
+                foreach (var element in c2._additionalElements)
                 {
                     var atom = element.Key;
                     short numAtoms;
-                    if (_additionalElements.TryGetValue(atom, out numAtoms))
+                    if (c1._additionalElements.TryGetValue(atom, out numAtoms))
                     {
                         // atom was in _additionalElements
                         additionalElements[atom] = (short)(numAtoms + element.Value);
@@ -188,42 +186,18 @@ namespace InformedProteomics.Backend.Data.Composition
                     }
                 }
             }
-            else if (_additionalElements != null)
+            else if (c1._additionalElements != null)
             {
-                additionalElements = new Dictionary<Atom, short>(_additionalElements);
+                additionalElements = new Dictionary<Atom, short>(c1._additionalElements);
             }
-            else if (c._additionalElements != null)
+            else if (c2._additionalElements != null)
             {
-                additionalElements = new Dictionary<Atom, short>(c._additionalElements);
+                additionalElements = new Dictionary<Atom, short>(c2._additionalElements);
             }
 
             var newComposition = new Composition(numC, numH, numN, numO, numS, numP, additionalElements);
 
-            return newComposition;              
-        }
-
-        public Composition Add(Composition c)
-        {
-            var comWithDelta = c as CompositionWithDeltaMass;
-            if (comWithDelta != null) return comWithDelta.Add(this);
-
-            return AddComposition(c);
-        }
-
-        public static Composition operator +(Composition c1, Composition c2)
-        {
-            var compWithDelta = c1 as CompositionWithDeltaMass;
-            if (compWithDelta == null) return c1.Add(c2);
-            return compWithDelta.Add(c2);
-        }
-
-        public Composition Negate()
-        {
-            if (_additionalElements == null)
-                return new Composition(-_c, -_h, -_n, -_o, -_s, -_p);
-            var additionalElements =
-                _additionalElements.ToDictionary(element => element.Key, element => (short)(-element.Value));
-            return new Composition(-_c, -_h, -_n, -_o, -_s, -_p, additionalElements);
+            return newComposition;
         }
 
         /// <summary>
@@ -233,9 +207,11 @@ namespace InformedProteomics.Backend.Data.Composition
         /// <returns></returns>
         public static Composition operator -(Composition c)
         {
-            var compWithDelta = c as CompositionWithDeltaMass;
-            if (compWithDelta == null) return c.Negate();
-            return compWithDelta.Negate();
+            if (c._additionalElements == null)
+                return new Composition(-c._c, -c._h, -c._n, -c._o, -c._s, -c._p);
+            var additionalElements =
+                c._additionalElements.ToDictionary(element => element.Key, element => (short)(-element.Value));
+            return new Composition(-c._c, -c._h, -c._n, -c._o, -c._s, -c._p, additionalElements);
         }
 
         public static Composition operator -(Composition c1, Composition c2)

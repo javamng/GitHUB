@@ -45,6 +45,11 @@ namespace InformedProteomics.Backend.Database
             }
         }
 
+        public int Search(string query)
+        {
+            throw new NotImplementedException();
+        }
+
         public IEnumerable<AnnotationAndOffset> AnnotationsAndOffsets(int minLength, int maxLength, int numTolerableTermini,
                                                       int numMissedCleavages, Enzyme enzyme)
         {
