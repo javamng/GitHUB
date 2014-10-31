@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using InformedProteomics.Backend.Data.Biology;
 using InformedProteomics.Backend.Data.Spectrometry;
 
@@ -31,12 +31,16 @@ namespace InformedProteomics.Backend.Data.Composition
         public static IsotopomerEnvelope GetIsotopomerEnvelopeFromNominalMass(int nominalMass)
         {
             IsotopomerEnvelope envelope;
+            RwLock.EnterReadLock();
             var nominalMassFound = IsotopeEnvelopMap.TryGetValue(nominalMass, out envelope);
+            RwLock.ExitReadLock();
             if (nominalMassFound) return envelope;
 
             var mass = nominalMass/Constants.RescalingConstant;
             envelope = ComputeIsotopomerEnvelope(mass);
-            IsotopeEnvelopMap.AddOrUpdate(nominalMass, envelope, (key, value) => value);
+            RwLock.EnterWriteLock();
+            IsotopeEnvelopMap[nominalMass] = envelope;
+            RwLock.ExitWriteLock();
 
             return envelope;
         }
@@ -47,12 +51,14 @@ namespace InformedProteomics.Backend.Data.Composition
         private const double O = 1.4773;
         private const double S = 0.0417;
         private const double AveragineMass = C * Atom.C + H * Atom.H + N * Atom.N + O * Atom.O + S * Atom.S;
+        private static readonly ReaderWriterLockSlim RwLock;
 
-        private static readonly ConcurrentDictionary<int, IsotopomerEnvelope> IsotopeEnvelopMap; // NominalMass -> Isotope Envelop (Changed to ConcurrentDictionary by Chris)
+        private static readonly Dictionary<int, IsotopomerEnvelope> IsotopeEnvelopMap; // NominalMass -> Isotope Envelop
 
         static Averagine()
         {
-            IsotopeEnvelopMap = new ConcurrentDictionary<int, IsotopomerEnvelope>();
+            IsotopeEnvelopMap = new Dictionary<int, IsotopomerEnvelope>();
+            RwLock = new ReaderWriterLockSlim();
         }
 
         private static IsotopomerEnvelope ComputeIsotopomerEnvelope(double mass)
