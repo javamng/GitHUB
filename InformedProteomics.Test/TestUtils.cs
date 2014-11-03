@@ -22,66 +22,6 @@ namespace InformedProteomics.Test
     internal class TestUtils
     {
         [Test]
-        public void TestCountingMs2Scans()
-        {
-            var numSpectra = 0;
-            const string rawFileDir = @"H:\Research\TopDownTestData";
-            foreach (var rawFilePath in Directory.GetFiles(rawFileDir, "*.raw"))
-            {
-                var run = PbfLcMsRun.GetLcMsRun(rawFilePath);
-                numSpectra += run.GetScanNumbers(2).Count;
-            }
-            Console.WriteLine(numSpectra);
-        }
-
-        [Test]
-        public void TestFloatBinning()
-        {
-            const double minMass = 200;
-            const double maxMass = 50000;
-            const int numBits = 29;
-
-            var comparer = new MzComparerWithBinning(numBits);
-            Console.WriteLine(comparer.GetBinNumber(maxMass));
-            Console.WriteLine(comparer.GetBinNumber(maxMass) - comparer.GetBinNumber(minMass) + 1);
-            Console.WriteLine(LcMsMatchMap.GetBinNumber(maxMass) - LcMsMatchMap.GetBinNumber(minMass) + 1);
-        }
-
-        [Test]
-        public void TestGeneratingNtoKCombinationsWithRepetition()
-        {
-            const int n = 3;
-            const int k = 4;
-            var combinations = SimpleMath.GetNtoTheKCombinations(n, k);
-            int count = 0;
-            foreach (var combination in combinations)
-            {
-                ++count;
-                Console.WriteLine((count - 1) + ": " + string.Join(",", combination));
-            }
-            Console.WriteLine("Count: " + count);
-            Console.WriteLine("Count2: " + SimpleMath.GetCombination(n + k - 1, k));
-        }
-
-        [Test]
-        public void TestGeneratingCombinations()
-        {
-            const int n = 5;
-            const int k = 3;
-            var combinations = SimpleMath.GetCombinationsWithRepetition(n, k);
-            int count = 0;
-            foreach (var combination in combinations)
-            {
-                ++count;
-                Console.WriteLine((count - 1) + ": " + string.Join(",", combination));
-            }
-            Console.WriteLine("Count: " + count);
-            Console.WriteLine("Count2: " + SimpleMath.GetCombination(n + k - 1, k));
-        }
-
-
-
-        [Test]
         public void ParseMsGfString()
         {
             const string msgfPepStr = "+229.163C+57.021GLGGSGTPVDELDK+229.163C+57.021C+57.021QTHDNC+57.021YDQAK+229.163";
@@ -115,36 +55,34 @@ namespace InformedProteomics.Test
         [Test]
         public void TestAaSet()
         {
-            //var oxEverywhere = new SearchModification(Modification.Oxidation, '*', SequenceLocation.Everywhere, true);
-            //var acetylNTerm = new SearchModification(Modification.Acetylation, '*', SequenceLocation.PeptideNTerm,
-            //    false);
-            //var iTraqCTerm = new SearchModification(Modification.Itraq4Plex, '*', SequenceLocation.PeptideCTerm, true);
-            //var iTraqK = new SearchModification(Modification.Itraq4Plex, 'K', SequenceLocation.PeptideCTerm, true);
-            //var oxM = new SearchModification(Modification.Oxidation, 'M', SequenceLocation.Everywhere, false);
-            //var carbamidomethylC = new SearchModification(Modification.Carbamidomethylation, 'C',
-            //    SequenceLocation.Everywhere, true);
-            //var dehydroC = new SearchModification(Modification.Dehydro, 'C', SequenceLocation.Everywhere, false);
-            //var glutathioneC = new SearchModification(Modification.Glutathione, 'C', SequenceLocation.Everywhere, false);
-            //var nitrosylC = new SearchModification(Modification.Nitrosyl, 'C', SequenceLocation.Everywhere, false);
-            //var nethylmaleimideC = new SearchModification(Modification.Nethylmaleimide, 'C', SequenceLocation.Everywhere, false);
-            //const int numMaxModsPerProtein = 4;
-            //var searchModifications = new List<SearchModification>
-            //{
-            //    oxEverywhere
-            //    //iTraqK,
-            //    //iTraqCTerm
-            //    //acetylNTerm
-            //    //carbamidomethylC,
-            //    //dehydroC,
-            //    //glutathioneC,
-            //    //nitrosylC,
-            //    //nethylmaleimideC,
-            //    //oxM
-            //};
-            //var aaSet = new AminoAcidSet(searchModifications, numMaxModsPerProtein);
-            //aaSet.Display();
-
-            Console.WriteLine(Composition.H2O.Mass);
+            var oxEverywhere = new SearchModification(Modification.Oxidation, '*', SequenceLocation.Everywhere, true);
+            var acetylNTerm = new SearchModification(Modification.Acetylation, '*', SequenceLocation.PeptideNTerm,
+                false);
+            var iTraqCTerm = new SearchModification(Modification.Itraq4Plex, '*', SequenceLocation.PeptideCTerm, true);
+            var iTraqK = new SearchModification(Modification.Itraq4Plex, 'K', SequenceLocation.PeptideCTerm, true);
+            var oxM = new SearchModification(Modification.Oxidation, 'M', SequenceLocation.Everywhere, false);
+            var carbamidomethylC = new SearchModification(Modification.Carbamidomethylation, 'C',
+                SequenceLocation.Everywhere, true);
+            var dehydroC = new SearchModification(Modification.Dehydro, 'C', SequenceLocation.Everywhere, false);
+            var glutathioneC = new SearchModification(Modification.Glutathione, 'C', SequenceLocation.Everywhere, false);
+            var nitrosylC = new SearchModification(Modification.Nitrosyl, 'C', SequenceLocation.Everywhere, false);
+            var nethylmaleimideC = new SearchModification(Modification.Nethylmaleimide, 'C', SequenceLocation.Everywhere, false);
+            const int numMaxModsPerProtein = 4;
+            var searchModifications = new List<SearchModification>
+            {
+                oxEverywhere
+                //iTraqK,
+                //iTraqCTerm
+                //acetylNTerm
+                //carbamidomethylC,
+                //dehydroC,
+                //glutathioneC,
+                //nitrosylC,
+                //nethylmaleimideC,
+                //oxM
+            };
+            var aaSet = new AminoAcidSet(searchModifications, numMaxModsPerProtein);
+            aaSet.Display();
         }
 
         [Test]
@@ -268,6 +206,22 @@ namespace InformedProteomics.Test
 
             Console.WriteLine(modParams.GetModificationCombinationIndex(8, 0));
             Console.WriteLine(modParams.GetModificationCombinationIndex(19, 1));
+        }
+
+        [Test]
+        public void TestGeneratingCombinations()
+        {
+            const int n = 5;
+            const int k = 3;
+            var combinations = SimpleMath.GetCombinationsWithRepetition(n, k);
+            int count = 0;
+            foreach (var combination in combinations)
+            {
+                ++count;
+                Console.WriteLine((count-1)+": "+string.Join(",", combination));
+            }
+            Console.WriteLine("Count: " + count);
+            Console.WriteLine("Count2: " + SimpleMath.NChooseK(n + k - 1, k));
         }
 
         [Test]
@@ -482,7 +436,7 @@ namespace InformedProteomics.Test
             Console.WriteLine(comp1 + comp2);
             Console.WriteLine(comp1 - comp2);
 
-            var ionTypeFactory = IonTypeFactory.GetDeconvolutedIonTypeFactory(new[] {BaseIonType.B, BaseIonType.Y}, new[] { NeutralLoss.NoLoss, NeutralLoss.H2O});
+            var ionTypeFactory = IonTypeFactory.GetDeconvolutedIonTypeFactory(new[] {BaseIonType.B, BaseIonType.Y});
             foreach (var ionType in ionTypeFactory.GetAllKnownIonTypes())
             {
                 Console.WriteLine(ionType);
@@ -557,52 +511,6 @@ namespace InformedProteomics.Test
                     Assert.True(ppmError <= tolerance.GetValue());
                 }
             }
-        }
-
-        [Test]
-        public void TestUpdateModificationComposition()
-        {
-            const string modName1 = "mod1";
-            var composition1 = new Composition(0, 1, 0, 2, 0, 0);
-            var mod = Modification.RegisterAndGetModification(modName1, composition1);
-            Assert.NotNull(mod);
-
-            var getmod = Modification.Get(modName1);
-            Assert.NotNull(getmod);
-            Assert.AreEqual(mod, getmod);
-
-            const string modName2 = "mod2";
-            var composition2 = new Composition(1,0,2,4,1,9);
-            var editedMod = Modification.UpdateAndGetModification(modName2, composition2);
-            Assert.NotNull(editedMod);
-
-            var getEditedMod = Modification.Get(modName2);
-            Assert.NotNull(getEditedMod);
-            Assert.AreEqual(editedMod, getEditedMod);
-            Assert.AreNotEqual(mod, getEditedMod);
-        }
-
-        [Test]
-        public void TestUpdateModificationMass()
-        {
-            const string modName1 = "mod1";
-            const int mass1 = 1000;
-            var mod = Modification.RegisterAndGetModification(modName1, mass1);
-            Assert.NotNull(mod);
-
-            var getmod = Modification.Get(modName1);
-            Assert.NotNull(getmod);
-            Assert.AreEqual(mod, getmod);
-
-            const string modName2 = "mod2";
-            const int mass2 = 1100;
-            var editedMod = Modification.UpdateAndGetModification(modName2, mass2);
-            Assert.NotNull(editedMod);
-
-            var getEditedMod = Modification.Get(modName2);
-            Assert.NotNull(getEditedMod);
-            Assert.AreEqual(editedMod, getEditedMod);
-            Assert.AreNotEqual(mod, getEditedMod);
         }
     }
 }
