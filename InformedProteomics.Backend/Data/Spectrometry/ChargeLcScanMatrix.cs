@@ -557,7 +557,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                     for (var j = 0; j < _nScans; j++)
                     {
                         _intensityMap[c][j] += xic[j];
-                        _xicMatrix[c][j][i] = xic[j];
+                        _xicMatrix[c][j][i] += xic[j];
                     }
                     
                     if (c < 30) continue;
