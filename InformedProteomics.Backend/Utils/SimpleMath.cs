@@ -1,42 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using MathNet.Numerics.Distributions;
 
 namespace InformedProteomics.Backend.Utils
 {
     public class SimpleMath
     {
-        public static int NChooseK(int n, int k)
-        {
-            int num = 1;
-            for (int i = 0; i < k; i++)
-                num *= n - i;
-            int denom = 1;
-            for (int i = 0; i < k; i++)
-                denom *= k - i;
-            return num/denom;
-        }
-
-        private static readonly Dictionary<Tuple<int, int>, double> LogCombinations = new Dictionary<Tuple<int, int>, double>();
-
         public static double GetCombination(int n, int k)
         {
-            var sum = GetLogCombination(n, k);
-            return Math.Exp(sum);
+            var sum = GetLog10Combination(n, k);
+            return Math.Pow(10, sum);
         }
 
-        public static double GetLogCombination(int n, int k)
+        public static double GetLog10Combination(int n, int k)
         {
-            double sum = 0d;
-            if (LogCombinations.TryGetValue(new Tuple<int, int>(n, k), out sum)) return sum;
-
+            double sum = 0;
             for (var i = 0; i < k; i++)
             {
-                sum += Math.Log(n - i);
-                sum -= Math.Log(i + 1);
+                sum += Math.Log(n - i, 10);
+                sum -= Math.Log(i + 1, 10);
             }
-
-            LogCombinations.Add(new Tuple<int, int>(n, k), sum);
             return sum;
         }
         
@@ -66,42 +50,6 @@ namespace InformedProteomics.Backend.Utils
                 {
                     int lastValue = combination.Last();
                     for (int j = lastValue; j < n; j++)
-                    {
-                        var newCombination = new int[combination.Length + 1];
-                        Array.Copy(combination, newCombination, combination.Length);
-                        newCombination[newCombination.Length - 1] = j;
-                        combinations.Add(newCombination);
-                    }
-                }
-                return combinations.ToArray();
-            }
-        }
-
-        public static int[][] GetNtoTheKCombinations(int n, int length)
-        {
-            if (n <= 0)
-                return null;
-
-            if (length == 0)
-            {
-                return new[] { new int[0] };
-            }
-            if (length == 1)
-            {
-                var combinations = new int[n][];
-                for (var i = 0; i < n; i++)
-                {
-                    combinations[i] = new[] { i };
-                }
-                return combinations;
-            }
-            else
-            {
-                var prevCombinations = GetNtoTheKCombinations(n, length - 1);
-                var combinations = new List<int[]>();
-                foreach (var combination in prevCombinations)
-                {
-                    for (var j = 0; j < n; j++)
                     {
                         var newCombination = new int[combination.Length + 1];
                         Array.Copy(combination, newCombination, combination.Length);
