@@ -88,6 +88,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
             var binNumber = _comparer.GetBinNumber(monoIsotopicMass);
             if (_binNumToMs2ScanNumsMap.TryGetValue(binNumber, out ms2Scans)) return ms2Scans;
 
+            BuildMatrix(binNumber);
             var clusters = FindClusters(binNumber, 0.7, 0.7);
             var ms2ScanSet = new HashSet<int>();
 
@@ -124,7 +125,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
             var binNumber = _comparer.GetBinNumber(monoIsotopicMass);
            
             BuildMatrix(binNumber);
-            var clusters = FindClusters(binNumber, 0.7, 0.7);
+            var clusters = FindClusters(binNumber, 0.9, 0.7, 0.9, 0.7);
 
             foreach (var c in clusters)
             {
@@ -557,7 +558,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                     for (var j = 0; j < _nScans; j++)
                     {
                         _intensityMap[c][j] += xic[j];
-                        _xicMatrix[c][j][i] = xic[j];
+                        _xicMatrix[c][j][i] += xic[j];
                     }
                     
                     if (c < 30) continue;
@@ -654,7 +655,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
             return seedCells.OrderByDescending(x => x.Key).Select(x => x.Value);
         }
 
-        private List<ChargeLcScanCluster> FindClusters(int binNumber, double envelopCorrTh = 0.7, double isoCorrTh = 0.5)
+        private List<ChargeLcScanCluster> FindClusters(int binNumber, double envelopCorrTh = 0.7, double isoCorrTh = 0.5, double envelopCorrTh2 = 0.9, double isoCorrTh2 = 0.2)
         {
             var monoMass = _comparer.GetMzAverage(binNumber);
             var checkedOut = new bool[_nCharges][];
@@ -676,7 +677,6 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                 while (neighbors.Count > 0)
                 {
                     var cell = neighbors.Dequeue();
-                    //var chargeNeighborGap = Math.Max((int)Math.Floor((cell.Row + _minCharge)*0.1), 2);
                     const int chargeNeighborGap = 2;
                     
                     for (var k = Math.Max(cell.Row - chargeNeighborGap, _chargeIndexes.First()); k <= Math.Min(cell.Row + chargeNeighborGap, _chargeIndexes.Last()); k++)
@@ -693,7 +693,6 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                             {
                                 var newMember = new ChargeLcScanCell(k, l);
                                 neighbors.Enqueue(newMember);
-                                //newCluster.AddMember(newMember, _intensityMap[k][l], tempEnvelope, newScore);
                                 newCluster.AddMember(newMember, _intensityMap[k][l], _xicMatrix[k][l], newScore);
                                 checkedOut[k][l] = true;
                             }
@@ -707,7 +706,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                 if (newCluster.Score > envelopCorrTh)
                 {
                     var score2 = CalculateXicCorrelationOverTimeBetweenIsotopes(monoMass, newCluster);
-                    if (score2 > isoCorrTh || (newCluster.Score > 0.9 && score2 > 0.2)) clusters.Add(newCluster);
+                    if (score2 > isoCorrTh || (newCluster.Score > envelopCorrTh2 && score2 > isoCorrTh2)) clusters.Add(newCluster);
 
                     for (var i = newCluster.MinRow; i <= newCluster.MaxRow; i++)
                         for (var j = newCluster.MinCol; j <= newCluster.MaxCol; j++)
