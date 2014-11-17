@@ -12,7 +12,7 @@ namespace InformedProteomics.TopDown.Scoring
     {
         public ProductScorerBasedOnDeconvolutedSpectra(
             ILcMsRun run, 
-            int minProductCharge = 1, int maxProductCharge = 20,
+            int minProductCharge = 1, int maxProductCharge = 10,
             double productTolerancePpm = 10,
             int isotopeOffsetTolerance = 2,
             double filteringWindowSize = 1.1
@@ -62,6 +62,7 @@ namespace InformedProteomics.TopDown.Scoring
         {
             var spec = _run.GetSpectrum(scanNum) as ProductSpectrum;
             if (spec == null) return null;
+            //if (spec.ScanNum != 879) continue;
             var deconvolutedSpec = GetDeconvolutedSpectrum(spec, _minProductCharge, _maxProductCharge, _productTolerance, CorrScoreThresholdMs2) as ProductSpectrum;
             if (deconvolutedSpec != null) return new DeconvScorer(deconvolutedSpec, _productTolerance);
             return null;
@@ -158,13 +159,11 @@ namespace InformedProteomics.TopDown.Scoring
         public static int GetBinNumber(double mass)
         {
             return (int) Math.Round(mass*RescalingConstantHighPrecision);
-            //return Comparer.GetBinNumber(mass);
         }
 
         public static double GetMz(int binNum)
         {
             return binNum/RescalingConstantHighPrecision;
-            //return Comparer.GetMzAverage(binNum);
         }
 
         public void WriteToFile(string outputFilePath)
@@ -184,7 +183,5 @@ namespace InformedProteomics.TopDown.Scoring
         private readonly Tolerance _productTolerance;
         private const double RescalingConstantHighPrecision = Constants.RescalingConstantHighPrecision;
         private const double CorrScoreThresholdMs2 = 0.7;
-        //private static readonly MzComparerWithBinning Comparer = new MzComparerWithBinning(29); // max error: 4ppm
-
     }
 }

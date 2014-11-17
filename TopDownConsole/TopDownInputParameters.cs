@@ -15,7 +15,7 @@ namespace MSPathFinderT
         public string OutputDir { get; set; }
         public AminoAcidSet AminoAcidSet { get; set; }
         public int SearchMode { get; set; }
-        public bool? Tda { get; set; }
+        public bool Tda { get; set; }
         public double PrecursorIonTolerancePpm { get; set; }
         public double ProductIonTolerancePpm { get; set; }
         public int MinSequenceLength { get; set; }
@@ -26,8 +26,8 @@ namespace MSPathFinderT
         public int MaxProductIonCharge { get; set; }
         public double MinSequenceMass { get; set; }
         public double MaxSequenceMass { get; set; }
-        public string FeatureFilePath { get; set; }
-        public double FeatureMinProbability { get; set; }
+        public double CorrThreshold { get; set; }
+        public string IsosFilePath { get; set; }
 
         private IEnumerable<SearchModification> _searchModifications;
         private int _maxNumDynModsPerSequence;
@@ -36,10 +36,9 @@ namespace MSPathFinderT
         {
             foreach (var specFilePath in SpecFilePaths) Console.WriteLine("\t{0}", specFilePath);
             Console.WriteLine("DatabaseFilePath: " + DatabaseFilePath);
-            Console.WriteLine("FeatureFilePath: {0}", FeatureFilePath ?? "N/A");
             Console.WriteLine("OutputDir: " + OutputDir);
             Console.WriteLine("SearchMode: " + SearchMode);
-            Console.WriteLine("Tda: " + (Tda == null ? "Decoy" : (bool)Tda ? "Target+Decoy" : "Target"));
+            Console.WriteLine("Tda: " + Tda);
             Console.WriteLine("PrecursorIonTolerancePpm: " + PrecursorIonTolerancePpm);
             Console.WriteLine("ProductIonTolerancePpm: " + ProductIonTolerancePpm);
             Console.WriteLine("MinSequenceLength: " + MinSequenceLength);
@@ -50,16 +49,15 @@ namespace MSPathFinderT
             Console.WriteLine("MaxProductIonCharge: " + MaxProductIonCharge);
             Console.WriteLine("MinSequenceMass: " + MinSequenceMass);
             Console.WriteLine("MaxSequenceMass: " + MaxSequenceMass);
-            Console.WriteLine("MinFeatureProbability: " + FeatureMinProbability);
             Console.WriteLine("MaxDynamicModificationsPerSequence: " + _maxNumDynModsPerSequence);
             Console.WriteLine("Modifications: ");
             foreach (var searchMod in _searchModifications)
             {
                 Console.WriteLine(searchMod);
             }
-            if (FeatureFilePath != null)
+            if (IsosFilePath != null)
             {
-                Console.WriteLine("Getting MS1 features from {0}.", FeatureFilePath);
+                Console.WriteLine("Getting MS1 features from {0}.", IsosFilePath);
             }
         }
 
@@ -74,9 +72,8 @@ namespace MSPathFinderT
                 {
                     writer.WriteLine("SpecFile\t" + Path.GetFileName(specFilePath));
                     writer.WriteLine("DatabaseFile\t" + Path.GetFileName(DatabaseFilePath));
-                    writer.WriteLine("FeatureFile\t{0}", FeatureFilePath != null ? Path.GetFileName(FeatureFilePath) : Path.GetFileName(Path.ChangeExtension(specFilePath, ".ms1ft")));
                     writer.WriteLine("SearchMode\t" + SearchMode);
-                    writer.WriteLine("Tda\t" + (Tda == null ? "Decoy" : (bool)Tda ? "Target+Decoy" : "Target"));
+                    writer.WriteLine("Tda\t" + Tda);
                     writer.WriteLine("PrecursorIonTolerancePpm\t" + PrecursorIonTolerancePpm);
                     writer.WriteLine("ProductIonTolerancePpm\t" + ProductIonTolerancePpm);
                     writer.WriteLine("MinSequenceLength\t" + MinSequenceLength);
@@ -87,7 +84,6 @@ namespace MSPathFinderT
                     writer.WriteLine("MaxProductIonCharge\t" + MaxProductIonCharge);
                     writer.WriteLine("MinSequenceMass\t" + MinSequenceMass);
                     writer.WriteLine("MaxSequenceMass\t" + MaxSequenceMass);
-                    writer.WriteLine("MinFeatureProbability\t" + FeatureMinProbability);
                     writer.WriteLine("MaxDynamicModificationsPerSequence\t" + _maxNumDynModsPerSequence);
                     foreach (var searchMod in _searchModifications)
                     {
@@ -136,7 +132,7 @@ namespace MSPathFinderT
                 _searchModifications = new SearchModification[0];
             }
 
-            FeatureFilePath = parameters["-feature"];
+            IsosFilePath = parameters["-isos"];
 
             SearchMode = Convert.ToInt32(parameters["-m"]);
             if (SearchMode < 0 || SearchMode > 2)
@@ -148,13 +144,11 @@ namespace MSPathFinderT
             ProductIonTolerancePpm = Convert.ToDouble(parameters["-f"]);
 
             var tdaVal = Convert.ToInt32(parameters["-tda"]);
-            if (tdaVal != 0 && tdaVal != 1 && tdaVal != -1)
+            if (tdaVal != 0 && tdaVal != 1)
             {
                 return "Invalid value (" + tdaVal + ") for parameter -tda";
             }
-            if (tdaVal == 1) Tda = true;
-            else if (tdaVal == -1) Tda = null;
-            else Tda = false;
+            Tda = (tdaVal == 1);
 
             MinSequenceLength = Convert.ToInt32(parameters["-minLength"]);
             MaxSequenceLength = Convert.ToInt32(parameters["-maxLength"]);
@@ -184,11 +178,7 @@ namespace MSPathFinderT
                 return "MinSequenceMassInDa (" + MinSequenceMass + ") is larger than MaxSequenceMassInDa (" + MaxSequenceMass + ")!";
             }
 
-            FeatureMinProbability = Convert.ToDouble(parameters["-minProb"]);
-            if (FeatureMinProbability < 0.0 || FeatureMinProbability > 1.0)
-            {
-                return "FeatureMinProbability must be in [0,1]!";
-            }
+            CorrThreshold = Convert.ToDouble(parameters["-corr"]);
             return null;
         }
 
@@ -198,7 +188,7 @@ namespace MSPathFinderT
             {
                 var key = keyValuePair.Key;
                 var value = keyValuePair.Value;
-                if (keyValuePair.Value == null && keyValuePair.Key != "-mod" && keyValuePair.Key != "-o" && keyValuePair.Key != "-feature")
+                if (keyValuePair.Value == null && keyValuePair.Key != "-mod" && keyValuePair.Key != "-o" && keyValuePair.Key != "-isos")
                 {
                     return "Missing required parameter " + key + "!";
                 }
@@ -247,16 +237,13 @@ namespace MSPathFinderT
                         return "File not found." + value + "!";
                     }
                 }
-                else if (key.Equals("-feature"))
+                else if (key.Equals("-isos"))
                 {
                     if (value != null && !File.Exists(value))
                     {
                         return "File not found." + value + "!";
                     }
-                    if (value != null && 
-                        !Path.GetExtension(value).ToLower().Equals(".csv") && 
-                        !Path.GetExtension(value).ToLower().Equals(".ms1ft") &&
-                        !Path.GetExtension(value).ToLower().Equals(".msalign"))
+                    if (value != null && !Path.GetExtension(value).ToLower().Equals(".csv"))
                     {
                         return "Invalid extension for the parameter " + key + " (" + Path.GetExtension(value) + ")!";
                     }
