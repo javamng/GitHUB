@@ -1,25 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using InformedProteomics.Backend.Data.Biology;
 
 namespace InformedProteomics.Backend.Data.Spectrometry
 {
     public class DeconvolutedPeak: IComparable<DeconvolutedPeak>
     {
-        public DeconvolutedPeak(Peak mzPeak, double mass, int charge)
+        public DeconvolutedPeak(double mass, double intensity, int charge)
         {
             Mass = mass;
-            //Intensity = intensity;
+            Intensity = intensity;
             Charge = charge;
-            MzPeak = mzPeak;
         }
 
         public double Mass { get; private set; }
-        //public double Intensity { get; private set; }
-        public double Intensity { get { return MzPeak != null ? MzPeak.Intensity : 0; } }
-        public double Mz { get { return MzPeak.Mz;  } }
+        public double Intensity { get; private set; }
         public int Charge { get; private set; }
-        public Peak MzPeak { get; private set; }
 
         public int CompareTo(DeconvolutedPeak other)
         {
@@ -55,7 +49,7 @@ namespace InformedProteomics.Backend.Data.Spectrometry
         {
             return !Equals(left, right);
         }
-    }
 
+    }
 
 }
