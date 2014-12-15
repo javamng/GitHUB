@@ -35,13 +35,15 @@ namespace InformedProteomics.TopDown.Scoring
             var monoMassArr = icrToolsparser.GetData("monoisotopic_mw").Select(Convert.ToDouble).ToArray();
             var scanArray = icrToolsparser.GetData("scan_num").Select(s => Convert.ToInt32(s)).ToArray();
             var chargeArray = icrToolsparser.GetData("charge").Select(s => Convert.ToInt32(s)).ToArray();
-            var fitArray = icrToolsparser.GetData("fit").Select(Convert.ToDouble).ToArray();
+
+            var fitStringArr = icrToolsparser.GetData("fit");
+            var fitArray = fitStringArr == null ? null : icrToolsparser.GetData("fit").Select(Convert.ToDouble).ToArray();
 
             var minMass = double.MaxValue;
             var maxMass = 0.0;
-            for (var i = 0; i < fitArray.Length; i++)
+            for (var i = 0; i < monoMassArr.Length; i++)
             {
-                if (fitArray[i] > _fitScoreThreshold || chargeArray[i] <= 1) continue;
+                if (fitArray != null && fitArray[i] > _fitScoreThreshold || chargeArray[i] <= 1) continue;
                 var scan = scanArray[i];
                 var monoMass = monoMassArr[i];
                 if (minMass > monoMass) minMass = monoMass;

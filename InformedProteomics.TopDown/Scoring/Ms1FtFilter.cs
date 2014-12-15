@@ -9,43 +9,49 @@ namespace InformedProteomics.TopDown.Scoring
 {
     public class Ms1FtFilter : ISequenceFilter
     {
-        public Ms1FtFilter(LcMsRun run, Tolerance massTolerance, string ms1FtFileName, double minProbability = 0.0)
+        public Ms1FtFilter(LcMsRun run, Tolerance massTolerance, string isosFileName)
         {
-            _lcMsChargeMap = new LcMsChargeMap(run, massTolerance);
-            _minProbability = minProbability;
+            _run = run;
+            _massTolerance = massTolerance;
+            _lcMsMatchMap = new LcMsMatchMap();
 
-            Read(ms1FtFileName);
+            Read(isosFileName);
         }
 
-        private readonly LcMsChargeMap _lcMsChargeMap;
-        private readonly double _minProbability;
+        private readonly LcMsRun _run;
+        private readonly Tolerance _massTolerance;
+        private readonly LcMsMatchMap _lcMsMatchMap;
 
         public IEnumerable<int> GetMatchingMs2ScanNums(double sequenceMass)
         {
-            return _lcMsChargeMap.GetMatchingMs2ScanNums(sequenceMass);
+            return _lcMsMatchMap.GetMatchingMs2ScanNums(sequenceMass, _massTolerance, _run);
         }
 
         private void Read(string ms1FtFileName)
         {
             var ftFileParser = new TsvFileParser(ms1FtFileName);
-            //var featureIdArray = ftFileParser.GetData("FeatureID").Select(s => Convert.ToInt32(s)).ToArray();
-            var monoMassArr = ftFileParser.GetData("MonoMass").Select(Convert.ToDouble).ToArray();
-            var minScanArray = ftFileParser.GetData("MinScan").Select(s => Convert.ToInt32(s)).ToArray();
-            var maxScanArray = ftFileParser.GetData("MaxScan").Select(s => Convert.ToInt32(s)).ToArray();
-            var repScanArray = ftFileParser.GetData("RepScan").Select(s => Convert.ToInt32(s)).ToArray();
-            var minChargeArray = ftFileParser.GetData("MinCharge").Select(s => Convert.ToInt32(s)).ToArray();
-            var maxChargeArray = ftFileParser.GetData("MaxCharge").Select(s => Convert.ToInt32(s)).ToArray();
-            var probArray = ftFileParser.GetData("Probability").Select(Convert.ToDouble).ToArray();
-            var flagArray = ftFileParser.GetData("GoodEnough").Select(s => Convert.ToInt32(s)).ToArray();
+            var monoMassArr = ftFileParser.GetData("monoisotopic_mw").Select(Convert.ToDouble).ToArray();
+            //var repScanArray = ftFileParser.GetData("rep_scan_num").Select(s => Convert.ToInt32(s)).ToArray();
+            var minScanArray = ftFileParser.GetData("min_scan_num").Select(s => Convert.ToInt32(s)).ToArray();
+            var maxScanArray = ftFileParser.GetData("max_scan_num").Select(s => Convert.ToInt32(s)).ToArray();
 
+            var minMass = double.MaxValue;
+            var maxMass = 0.0;
             for (var i = 0; i < monoMassArr.Length; i++)
             {
-                if (flagArray[i] == 0 && probArray[i] < _minProbability) continue;
+                //var repScan = repScanArray[i];
                 var monoMass = monoMassArr[i];
-                _lcMsChargeMap.SetMatches(monoMass, minScanArray[i], maxScanArray[i], repScanArray[i], minChargeArray[i], maxChargeArray[i]);
+                if (minMass > monoMass) minMass = monoMass;
+                if (maxMass < monoMass) maxMass = monoMass;
+
+                //var minScan = _run.GetPrevScanNum(repScan, 1);
+                //var maxScan = _run.GetNextScanNum(repScan, 1);
+                var minScan = minScanArray[i];
+                var maxScan = maxScanArray[i];
+                _lcMsMatchMap.SetMatches(monoMass, minScan, maxScan);
             }
 
-            _lcMsChargeMap.CreateMassToScanNumMap();
+            _lcMsMatchMap.CreateSequenceMassToMs2ScansMap(_run, _massTolerance, minMass, maxMass);
         }
     }
 }

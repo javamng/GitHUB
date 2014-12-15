@@ -17,20 +17,6 @@ namespace InformedProteomics.Test.FunctionalTests
         public const string TestQExactiveRawFilePath = @"\\protoapps\UserData\Sangtae\TestData\SpecFiles\QC_Shew_13_04_A_17Feb14_Samwise_13-07-28.raw";
         public const string TestQExactivePbfFilePath = @"\\protoapps\UserData\Sangtae\TestData\SpecFiles\QC_Shew_13_04_A_17Feb14_Samwise_13-07-28.pbf";
 
-
-        public void TestReadingIsolationWindows()
-        {
-            var run = InMemoryLcMsRun.GetLcMsRun(TestRawFilePath, MassSpecDataType.XCaliburRun);
-            for (var scanNum = run.MinLcScan; scanNum <= run.MaxLcScan; scanNum++)
-            {
-                var isolationWindow = run.GetIsolationWindow(scanNum);
-                if (isolationWindow != null)
-                {
-                    Console.WriteLine("{0}\t{1}\t{2}", scanNum, isolationWindow.MonoisotopicMz ?? 0.0, isolationWindow.Charge ?? 0.0);
-                }
-            }
-        }
-
         //"\\protoapps\UserData\Sangtae\TopDownQCShew\raw";
         public void TestReadingScanNums()
         {
@@ -246,48 +232,6 @@ namespace InformedProteomics.Test.FunctionalTests
             }
 
             Console.Write("Done");
-        }
-
-        [Test]
-        public void TestReadingSingleSpecMzMlFile()
-        {
-            const string filePath = @"D:\Research\Data\TRex\VNVADCGAEALAR.mzML";
-            var run = PbfLcMsRun.GetLcMsRun(filePath, MassSpecDataType.MzMLFile);
-            Console.WriteLine(run.MaxLcScan);
-        }
-
-
-        [Test]
-        public void TestReadingBrukerDaltonDataSet()
-        {
-            const string FileExtension = ".pbf";
-            const string specFilePath = @"D:\MassSpecFiles\ICR\20141212FGWT1_F5_1_01_3230.mzML";
-            Console.WriteLine("TEst start");
-            //var reader = new BrukerReader(specFilePath);
-            var reader = new MzMLReader(specFilePath);
-
-            var run = new InMemoryLcMsRun(reader, 1.4826, 1.4826);
-            //var run = new InMemoryLcMsRun(reader, 3, 1.4826);
-            var pbfFilePath = Path.ChangeExtension(specFilePath, FileExtension);
-            run.WriteAsPbf(pbfFilePath);
-            /*
-            foreach (var spec in reader.ReadAllSpectra())
-            {
-                if (spec != null)
-                {
-                    Console.WriteLine(spec.ScanNum);
-                }
-            }*/
-            Console.WriteLine("TEst end");
-        }
-
-        [Test]
-        public void TestReadingRawFileWithSingleMs2Spectrum()
-        {
-            const string specFilePath = @"H:\Research\Jared\2015-05-06_Carbonic_HCD_854_50AVG.raw";
-//            var run = (InMemoryLcMsRun) InMemoryLcMsRun.GetLcMsRun(specFilePath, MassSpecDataType.XCaliburRun);
-//            run.WriteAsPbf(Path.ChangeExtension(specFilePath, ".pbf"));
-            var run = PbfLcMsRun.GetLcMsRun(specFilePath);
         }
     }
 }

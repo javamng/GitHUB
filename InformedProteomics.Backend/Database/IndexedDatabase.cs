@@ -23,9 +23,9 @@ namespace InformedProteomics.Backend.Database
         {
             FastaDatabase = fastaDatabase;
             var databaseFilePath = FastaDatabase.GetFastaFilePath();
-            //var databaseFilePathNoExt = Path.GetDirectoryName(databaseFilePath) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(databaseFilePath);
-            //_pLcpFilePath = databaseFilePathNoExt + PermutedLongestCommonPrefixFileExtension;
-            _pLcpFilePath = Path.ChangeExtension(databaseFilePath, PermutedLongestCommonPrefixFileExtension);
+            var databaseFilePathNoExt = Path.GetDirectoryName(databaseFilePath) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(databaseFilePath);
+
+            _pLcpFilePath = databaseFilePathNoExt + PermutedLongestCommonPrefixFileExtension;
             var lastWriteTimeHash = FastaDatabase.GetLastWriteTimeHash();
 
             if (!File.Exists(_pLcpFilePath) || !FastaDatabase.CheckHashCodeBinaryFile(_pLcpFilePath, lastWriteTimeHash))
@@ -43,11 +43,6 @@ namespace InformedProteomics.Backend.Database
                 PLcp = new byte[fileStream.Length - sizeof(int)];
                 fileStream.Read(PLcp, 0, PLcp.Length);
             }
-        }
-
-        public int Search(string query)
-        {
-            throw new NotImplementedException();
         }
 
         public IEnumerable<AnnotationAndOffset> AnnotationsAndOffsets(int minLength, int maxLength, int numTolerableTermini,
@@ -500,4 +495,5 @@ namespace InformedProteomics.Backend.Database
         public byte[] Sequence { set; get; }
         public long Offset { set; get; }
     }
+
 }
