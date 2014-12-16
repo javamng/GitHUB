@@ -35,7 +35,7 @@ namespace InformedProteomics.TopDown.Scoring
 
             FindMatchedPeaks();
 
-            var score = GetRankSumScore();
+            var score = GetRankSumScore() + GetHyperGeometricScore();
 
             return score;
         }
@@ -111,11 +111,9 @@ namespace InformedProteomics.TopDown.Scoring
                         {
                             if (baseIonType.IsPrefix) _prefixIonPeakIndex.Add(baseIsotopePeakIndex);
                             else _suffixIonPeakIndex.Add(baseIsotopePeakIndex);
-                            _nObservedIonPeaks++;
                         }
-                        //_nObservedIonPeaks += nMatchedIsotopes;
-                        //_nTheoreticalIonPeaks += nIsotopes;
-                        _nTheoreticalIonPeaks++;
+                        _nObservedIonPeaks += nMatchedIsotopes;
+                        _nTheoreticalIonPeaks += nIsotopes;
                     }
                 }
                 index++;
@@ -153,9 +151,9 @@ namespace InformedProteomics.TopDown.Scoring
                     var peakMz = _ms2Spec.Peaks[i].Mz;
                     if (peakMz < minMz)
                     {
-                        //peakIndex = i;
-                        //break;
-                        return false;
+                        //return false;
+                        peakIndex = i;
+                        break;
                     }
                     if (peakMz <= maxMz)    // find match, move to prev isotope
                     {
@@ -182,9 +180,9 @@ namespace InformedProteomics.TopDown.Scoring
                     var peakMz = _ms2Spec.Peaks[i].Mz;
                     if (peakMz > maxMz)
                     {
-                        //peakIndex = i;
-                        //break;
-                        return false;
+                        //return false;
+                        peakIndex = i;
+                        break;
                     }
                     if (peakMz >= minMz)    // find match, move to prev isotope
                     {

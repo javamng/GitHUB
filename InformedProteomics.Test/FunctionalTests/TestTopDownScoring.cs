@@ -1,31 +1,17 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
 using InformedProteomics.Backend.Data.Biology;
 using InformedProteomics.Backend.Data.Composition;
 using InformedProteomics.Backend.Data.Sequence;
 using InformedProteomics.Backend.Data.Spectrometry;
 using InformedProteomics.Backend.MassSpecData;
-using InformedProteomics.Backend.Utils;
 using InformedProteomics.TopDown.Scoring;
 using NUnit.Framework;
 
 namespace InformedProteomics.Test.FunctionalTests
 {
     [TestFixture]
-
     class TestTopDownScoring
     {
-        [Test]
-        public void TestReadingMsDeconvFile()
-        {
-            const string rawFilePath = @"H:\Research\QCShew_TopDown\Production\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
-            var run = PbfLcMsRun.GetLcMsRun(rawFilePath);
-
-            const string filePath = @"H:\Research\QCShew_TopDown\Production\MsDeconvPlus\QC_Shew_Intact_26Sep14_Bane_C2Column3_msdeconv_plus.msalign";
-            var parser = new MsDeconvFilter(run, new Tolerance(10), filePath);
-        }
-
         [Test]
         public void PrintAllScorers()
         {
@@ -91,7 +77,7 @@ namespace InformedProteomics.Test.FunctionalTests
             Assert.True(spec != null);
 
             var scorer = new MatchedPeakCounter(spec, productIonTolerance, 1, 10);
-            var score = seqGraph.GetFragmentScore(scorer);
+            var score = seqGraph.GetScore(charge, scorer);
 
             Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", protAnnotation, charge, precursorIon.GetMostAbundantIsotopeMz(), ms2ScanNum, score);
 
@@ -150,7 +136,7 @@ namespace InformedProteomics.Test.FunctionalTests
 
             //var scorer = new MatchedPeakCounter(spec, productIonTolerance, 1, 10);
             var scorer = new CorrMatchedPeakCounter(spec, productIonTolerance, 1, 10);
-            var score = seqGraph.GetFragmentScore(scorer);
+            var score = seqGraph.GetScore(charge, scorer);
 
             Console.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}", protAnnotation, charge, precursorIon.GetMostAbundantIsotopeMz(), ms2ScanNum, score);
 
@@ -170,8 +156,8 @@ namespace InformedProteomics.Test.FunctionalTests
             const int ms2ScanNum = 4658;
             var sequence = new Sequence("GYSIKDIIYQGEKSGVHNWQTLSGQNFYWHPDWLHIAEDLTGHKATASIQAEGTKATQNEAEQTIVKHLNKS", new AminoAcidSet());
 
-            const string specFilePath = @"\\protoapps\UserData\Sangtae\TestData\SpecFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
-            //const string specFilePath = @"D:\MassSpecFiles\raw\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
+            //const string specFilePath = @"\\protoapps\UserData\Sangtae\TestData\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
+            const string specFilePath = @"D:\MassSpecFiles\raw\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
 
             var run = PbfLcMsRun.GetLcMsRun(specFilePath, MassSpecDataType.XCaliburRun, 0, 0);
             var spec = run.GetSpectrum(ms2ScanNum) as ProductSpectrum;
@@ -187,60 +173,6 @@ namespace InformedProteomics.Test.FunctionalTests
             Console.WriteLine(@"Elapsed Time: {0:f4} sec", sec);
         }
 
-        [Test]
-        public void TestJungkapScoring()
-        {
-            const string rawFilePath = @"\\protoapps\UserData\Sangtae\TestData\SpecFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3.raw";
-            var run = PbfLcMsRun.GetLcMsRun(rawFilePath);
-
-            var tolerance = new Tolerance(10);
-            const int minCharge = 1;
-            const int maxCharge = 15;
-
-            var aminoAcidSet = new AminoAcidSet();
-            var scorer = new MatchedPeakPostScorer(tolerance, minCharge, maxCharge);
-
-            const string resultFileName = @"\\protoapps\UserData\Sangtae\TestData\IdFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcDecoy.tsv";
-            var parser = new TsvFileParser(resultFileName);
-            var scans = parser.GetData("Scan").Select(s => Convert.ToInt32(s)).ToArray();
-            var protSequences = parser.GetData("Sequence").ToArray();
-            var modStrs = parser.GetData("Modifications").ToArray();
-            var compositions = parser.GetData("Composition").Select(Composition.Parse).ToArray();
-
-            const string outputFileName = @"\\protoapps\UserData\Sangtae\TestData\IdFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcDecoy_Rescored.tsv";
-            using (var writer = new StreamWriter(outputFileName))
-            {
-                writer.WriteLine(string.Join("\t", parser.GetHeaders()) + "\tScore");
-                for (var i = 0; i < parser.NumData; i++)
-                {
-                    var scan = scans[i];
-                    var protSequence = protSequences[i];
-                    var modStr = modStrs[i];
-                    //if (scan != 1765) continue;
-                    var sequence = Sequence.CreateSequence(protSequence, modStr, aminoAcidSet);
-                    //Console.WriteLine("{0}: {1} ? {2}", scan, sequence.Composition, compositions[i] - Composition.H2O);
-                    Assert.True(sequence.Composition.Equals(compositions[i] - Composition.H2O));
-                    var ms2Spec = run.GetSpectrum(scan) as ProductSpectrum;
-                    Assert.True(ms2Spec != null);
-                    var score = scorer.ComputeScore(ms2Spec, sequence);
-                    writer.WriteLine("{0}\t{1}", parser.GetRows()[i], score);
-                }
-            }
-            Console.WriteLine("Done");
-        }
-
-        [Test]
-        public void RecomputeFdr()
-        {
-            const string targetResultPath = @"\\protoapps\UserData\Sangtae\TestData\IdFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcTarget_Rescored.tsv";
-            const string decoyResultPath = @"\\protoapps\UserData\Sangtae\TestData\IdFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcDecoy_Rescored.tsv";
-            const string tdaResultPath = @"\\protoapps\UserData\Sangtae\TestData\IdFiles\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcTda_Rescored.tsv";
-            //const string targetResultPath = @"C:\cygwin\home\kims336\Data\TopDown\raw\SBEP_STM_001_02272012_Aragon.icresult";
-            //const string decoyResultPath = @"C:\cygwin\home\kims336\Data\TopDown\raw\SBEP_STM_001_02272012_Aragon.decoy.icresult";
-            var fdrCalculator = new FdrCalculator(targetResultPath, decoyResultPath);
-            fdrCalculator.WriteTo(tdaResultPath);
-            Console.WriteLine("Done");
-        }
 
     }
 }
