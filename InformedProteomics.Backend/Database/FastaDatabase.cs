@@ -35,12 +35,9 @@ namespace InformedProteomics.Backend.Database
             _databaseFilePath = databaseFilePath;
             _lastWriteTimeHash = File.GetLastWriteTime(_databaseFilePath).GetHashCode();
 
-            //var databaseFilePathNoExt = Path.GetDirectoryName(databaseFilePath) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(databaseFilePath);
-            //_seqFilePath = databaseFilePathNoExt + SeqFileExtension;
-            //_annoFilePath = databaseFilePathNoExt + AnnotationFileExtension;
-
-            _seqFilePath = Path.ChangeExtension(databaseFilePath, SeqFileExtension);
-            _annoFilePath = Path.ChangeExtension(databaseFilePath, AnnotationFileExtension);
+            var databaseFilePathNoExt = Path.GetDirectoryName(databaseFilePath) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(databaseFilePath);
+            _seqFilePath = databaseFilePathNoExt + SeqFileExtension;
+            _annoFilePath = databaseFilePathNoExt + AnnotationFileExtension;
 
             if (!File.Exists(_seqFilePath) 
                 || !File.Exists(_annoFilePath) 
@@ -176,12 +173,6 @@ namespace InformedProteomics.Backend.Database
             return _names.Count;
         }
 
-        public IEnumerable<string> GetProteinNames()
-        {
-            Read();
-            return _names.Values;
-        }
-
         public byte[] GetSequence()
         {
             if(_sequence == null)   Read();
@@ -238,14 +229,9 @@ namespace InformedProteomics.Backend.Database
             return Encoding.GetString(_sequence, (int)(offset + 1), length);
         }
 
-        public int GetOneBasedPositionInProtein(long offset)
-        {
-            return (int)(offset - GetOffsetKey(offset));
-        }
-
         public int GetZeroBasedPositionInProtein(long offset)
         {
-            return GetOneBasedPositionInProtein(offset) - 1;
+            return (int)(offset - GetOffsetKey(offset));
         }
 
         internal int GetLastWriteTimeHash()
