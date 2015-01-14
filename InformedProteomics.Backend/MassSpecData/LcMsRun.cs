@@ -33,7 +33,6 @@ namespace InformedProteomics.Backend.MassSpecData
         }
 
         public abstract Spectrum GetSpectrum(int scanNum);
-        public abstract Ms1Spectrum GetMs1Spectrum(int scanNum);
         public abstract IsolationWindow GetIsolationWindow(int scanNum);
 
         public Spectrum GetSummedMs1Spectrum(int scanNum, double elutionTimeTolerance)
@@ -268,19 +267,10 @@ namespace InformedProteomics.Backend.MassSpecData
         }
 
         private int[] _ms1ScanVector;
+
         public int[] GetMs1ScanVector()
         {
             return _ms1ScanVector ?? (_ms1ScanVector = GetScanNumbers(1).ToArray());
-        }
-
-        private int[] _ms1ScanNumToIndex;
-        public int[] GetMs1ScanNumToIndex()
-        {
-            if (_ms1ScanNumToIndex != null) return _ms1ScanNumToIndex;
-            var ms1ScanNums = GetMs1ScanVector();
-            _ms1ScanNumToIndex = new int[MaxLcScan + 1];
-            for (var i = 0; i < ms1ScanNums.Length; i++) _ms1ScanNumToIndex[ms1ScanNums[i]] = i;
-            return _ms1ScanNumToIndex;
         }
 
         public double[] GetFullPrecursorIonExtractedIonChromatogramVector(double minMz, double maxMz)

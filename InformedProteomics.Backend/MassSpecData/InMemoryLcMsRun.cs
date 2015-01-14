@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using InformedProteomics.Backend.Data.Spectrometry;
 
 namespace InformedProteomics.Backend.MassSpecData
@@ -68,20 +67,19 @@ namespace InformedProteomics.Backend.MassSpecData
 
             foreach (var spec in massSpecDataReader.ReadAllSpectra())
             {
-                //Console.WriteLine("Reading Scan {0}; {1} peaks", spec.ScanNum, spec.Peaks.Length);
+                //Console.WriteLine("Reading Scan {0}", spec.ScanNum);
                 ScanNumToMsLevel[spec.ScanNum] = spec.MsLevel;
                 ScanNumElutionTimeMap[spec.ScanNum] = spec.ElutionTime;
                 if (spec.MsLevel == 1)
                 {
                     if (precursorSignalToNoiseRatioThreshold > 0.0) spec.FilterNoise(precursorSignalToNoiseRatioThreshold);
-
                     foreach (var peak in spec.Peaks)
                     {
                         _ms1PeakList.Add(new LcMsPeak(peak.Mz, peak.Intensity, spec.ScanNum));
                     }
                     _scanNumSpecMap.Add(spec.ScanNum, spec);
                 }
-                else if (spec.MsLevel == 2)
+                else if(spec.MsLevel == 2)
                 {
                     var productSpec = spec as ProductSpectrum;
 
@@ -159,16 +157,6 @@ namespace InformedProteomics.Backend.MassSpecData
         {
             Spectrum spec;
             return _scanNumSpecMap.TryGetValue(scanNum, out spec) ? spec : null;
-        }
-
-        public override Ms1Spectrum GetMs1Spectrum(int scanNum)
-        {
-            //throw new NotImplementedException();
-            var spec = GetSpectrum(scanNum);
-            var ms1ScanNums = GetMs1ScanVector();
-            var ms1ScanIndex = Array.BinarySearch(ms1ScanNums, scanNum);
-            if (ms1ScanIndex < 0) return null;
-            return new Ms1Spectrum(scanNum, (ushort) ms1ScanIndex, spec.Peaks);
         }
 
         public override IsolationWindow GetIsolationWindow(int scanNum)
@@ -291,9 +279,8 @@ namespace InformedProteomics.Backend.MassSpecData
 
             // Precursor ion chromatograms
             var offsetBeginPrecursorChromatogram = writer.BaseStream.Position;
-
-            var minMzIndex = Ms1PeakList.Any() ? PbfLcMsRun.GetMzBinIndex(Ms1PeakList[0].Mz) : 0;
-            var maxMzIndex = Ms1PeakList.Any() ? PbfLcMsRun.GetMzBinIndex(Ms1PeakList[Ms1PeakList.Count - 1].Mz) : -1;
+            var minMzIndex = PbfLcMsRun.GetMzBinIndex(Ms1PeakList[0].Mz);
+            var maxMzIndex = PbfLcMsRun.GetMzBinIndex(Ms1PeakList[Ms1PeakList.Count - 1].Mz);
 
             var chromMzIndexToOffset = new long[maxMzIndex - minMzIndex + 1];
             var prevMzIndex = -1;
@@ -309,7 +296,7 @@ namespace InformedProteomics.Backend.MassSpecData
                 writer.Write(peak.Mz);
                 writer.Write((float)peak.Intensity);
                 writer.Write(peak.ScanNum);
-            }                
+            }
 
             // Product ion chromatograms
             var ms2PeakList = new List<LcMsPeak>();
@@ -348,7 +335,6 @@ namespace InformedProteomics.Backend.MassSpecData
                 }
                 writer.Write(scanNumToSpecOffset[scanNum - MinLcScan]);
             }
-
             // Precursor chromatogram index
             writer.Write(minMzIndex);   // min index
             writer.Write(maxMzIndex);
