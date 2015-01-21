@@ -6,7 +6,6 @@ namespace InformedProteomics.Backend.Data.Biology
 {
     using System;
 
-    [Serializable]
     public class Atom : IMatter, IEquatable<Atom>
     {
         public Atom(string code, double mass, int nominalMass, string name)
@@ -29,7 +28,6 @@ namespace InformedProteomics.Backend.Data.Biology
             {
                 new Atom("H", H, 1, "Hydrogen"),
                 new Atom("2H", 2.014101779, 2, "Deuterium"),
-                new Atom("D", 2.014101779, 2, "Deuterium"),
                 new Atom("Li", 7.016003, 7, "Lithium"),
                 new Atom("C", C, 12, "Carbon"),
                 new Atom("13C", Constants.C13, 13, "Carbon13"),
@@ -131,9 +129,9 @@ namespace InformedProteomics.Backend.Data.Biology
         }
 
         public override int GetHashCode() {
-            var result = 29;
-            result = result * 13 + (Name == null ? 0 : Name.GetHashCode());
-            result = result * 13 + (Code == null ? 0 : Code.GetHashCode());
+            int result = 29;
+            result = result * 13 + (this.Name == null ? 0 : this.Name.GetHashCode());
+            result = result * 13 + (this.Code == null ? 0 : this.Code.GetHashCode());
             return result;
         }
     }
