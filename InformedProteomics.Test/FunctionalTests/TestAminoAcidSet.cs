@@ -12,12 +12,5 @@ namespace InformedProteomics.Test.FunctionalTests
             var aaSet = new AminoAcidSet(modFilePath);
             aaSet.Display();
         }
-
-        public void TestParsingGlycoMods()
-        {
-            const string modFilePath = @"C:\cygwin\home\kims336\Data\Debug\MSPathFinder_Mods.txt";
-            var aaSet = new AminoAcidSet(modFilePath);
-            aaSet.Display();
-        }
     }
 }
