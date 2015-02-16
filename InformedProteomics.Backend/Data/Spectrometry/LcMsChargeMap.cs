@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using InformedProteomics.Backend.Data.Biology;
 using InformedProteomics.Backend.Data.Composition;
 using InformedProteomics.Backend.MassSpecData;
@@ -10,12 +9,10 @@ namespace InformedProteomics.Backend.Data.Spectrometry
 {
     public class LcMsChargeMap
     {
-        private const int MaxNumMs2ScansPerFeature = int.MaxValue;
-        public LcMsChargeMap(LcMsRun run, Tolerance tolerance, int maxNumMs2ScansPerMass = MaxNumMs2ScansPerFeature)
+        public LcMsChargeMap(LcMsRun run, Tolerance tolerance)
         {
             _run = run;
             _scanToIsolationWindow = new Dictionary<int, IsolationWindow>();
-            _maxNumMs2ScansPerMass = maxNumMs2ScansPerMass;
 
             foreach(var ms2ScanNum in _run.GetScanNumbers(2))
             {
@@ -64,17 +61,10 @@ namespace InformedProteomics.Backend.Data.Spectrometry
             _scanToIsolationWindow = null;
         }
 
-        public void SetMatches(double monoIsotopicMass, int minScanNum, int maxScanNum, int repScanNum, int minCharge, int maxCharge)
+        public void SetMatches(double monoIsotopicMass, int minScanNum, int maxScanNum, int minCharge, int maxCharge)
         {
-            if (minScanNum < _run.MinLcScan) minScanNum = _run.MinLcScan;
-            if (maxScanNum > _run.MaxLcScan) maxScanNum = _run.MaxLcScan;
-            if (repScanNum < minScanNum && repScanNum > maxScanNum) return;
-
             // determine bit array
             var bitArray = new BitArray(_run.MaxLcScan - _run.MinLcScan + 1);
-
-            var registeredMs2Scans = new SortedList<double, int>();
-            var repRt = _run.GetElutionTime(repScanNum);
             for (var scanNum = minScanNum; scanNum <= maxScanNum; scanNum++)
             {
                 IsolationWindow isolationWindow;
@@ -87,17 +77,9 @@ namespace InformedProteomics.Backend.Data.Spectrometry
                         Averagine.GetIsotopomerEnvelope(monoIsotopicMass).MostAbundantIsotopeIndex);
                     if (isolationWindow.Contains(mz))
                     {
-//                        bitArray.Set(scanNum - _run.MinLcScan, true);
-                        var rt = _run.GetElutionTime(scanNum);
-                        registeredMs2Scans.Add(Math.Abs(rt - repRt), scanNum);
+                        bitArray.Set(scanNum-_run.MinLcScan, true);
                     }
                 }
-            }
-
-            foreach (var e in registeredMs2Scans.Take(_maxNumMs2ScansPerMass))
-            {
-                var scanNum = e.Value;
-                bitArray.Set(scanNum - _run.MinLcScan, true);
             }
 
             var deltaMass = _tolerance.GetToleranceAsDa(monoIsotopicMass, 1);
@@ -127,8 +109,6 @@ namespace InformedProteomics.Backend.Data.Spectrometry
 
         private readonly LcMsRun _run;
         private readonly Tolerance _tolerance;
-        private readonly int _maxNumMs2ScansPerMass;
-
         private Dictionary<int, IsolationWindow> _scanToIsolationWindow;
         private readonly Dictionary<int, IEnumerable<int>> _sequenceMassBinToScanNumsMap;
 
