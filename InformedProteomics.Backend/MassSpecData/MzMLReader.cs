@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using System.Xml;
 using InformedProteomics.Backend.Data.Spectrometry;
@@ -12,14 +11,10 @@ namespace InformedProteomics.Backend.MassSpecData
 {
     public sealed class MzMLReader: IMassSpecDataReader, IDisposable
     {
-        #region Private Members
         private string _filePath;
         private Stream _file = null;
         private StreamReader _fileReader = null;
-        private XmlReader _xmlReaderForYield = null;
-        private bool _reduceMemoryUsage = false;
-        private long _artificialScanNum = 1;
-        private long _numSpectra = -1;
+        private long _artificialScanNum = 0;
         private IndexList _spectrumOffsets = new IndexList() {IndexType = IndexList.IndexListType.Spectrum};
         private IndexList _chromatogramOffsets = new IndexList() { IndexType = IndexList.IndexListType.Chromatogram };
         private long _indexListOffset = 0;
@@ -31,10 +26,7 @@ namespace InformedProteomics.Backend.MassSpecData
         private bool _allRead = false;
         private XmlReaderSettings _xSettings = new XmlReaderSettings { IgnoreWhitespace = true };
         private Encoding _encoding = null;
-        private readonly List<Spectrum> _spectra = new List<Spectrum>();
-        #endregion
 
-        #region Internal Objects
         /// <summary>
         /// Enumeration of common mzML versions
         /// </summary>
@@ -110,7 +102,6 @@ namespace InformedProteomics.Backend.MassSpecData
                 _type = string.Empty;
             }
         }
-
         private class CVParam : Param
         {
             public override string CVRef      // Required
@@ -147,7 +138,7 @@ namespace InformedProteomics.Backend.MassSpecData
 
         private class IndexList
         {
-            private long _artificialScanNum = 1;
+            private long _artificialScanNum = 0;
             public class IndexItem // A struct would be faster, but it can also be a pain since it is a value type
             {
                 public string Ref;
@@ -164,12 +155,10 @@ namespace InformedProteomics.Backend.MassSpecData
 
             public void Clear()
             {
-                _artificialScanNum = 1;
                 _offsets.Clear();
                 OffsetsMapInt.Clear();
                 OffsetsMapNative.Clear();
-                IdToNativeMap.Clear();
-                NativeToIdMap.Clear();
+                IdNativeMap.Clear();
             }
 
             public IndexListType IndexType = IndexListType.Unknown;
@@ -183,8 +172,7 @@ namespace InformedProteomics.Backend.MassSpecData
             public List<IndexItem> Offsets { get { return _offsets; } }
             public readonly Dictionary<string, long> OffsetsMapNative = new Dictionary<string, long>();
             public readonly Dictionary<long, long> OffsetsMapInt = new Dictionary<long, long>();
-            public readonly Dictionary<long, string> IdToNativeMap = new Dictionary<long, string>();
-            public readonly Dictionary<string, long> NativeToIdMap = new Dictionary<string, long>(); 
+            public readonly Dictionary<long, string> IdNativeMap = new Dictionary<long, string>();
 
             public void AddOffset(string idRef, string offset)
             {
@@ -193,13 +181,7 @@ namespace InformedProteomics.Backend.MassSpecData
 
             public void AddOffset(string idRef, long offset)
             {
-                var scanNum = _artificialScanNum++;
-                long num;
-                if (NativeIdConversion.TryGetScanNumberLong(idRef, out num))
-                {
-                    scanNum = num;
-                }
-                var item = new IndexItem(idRef, offset, scanNum);
+                var item = new IndexItem(idRef, offset, _artificialScanNum++);
                 AddMapForOffset(item);
                 _offsets.Add(item);
             }
@@ -215,8 +197,7 @@ namespace InformedProteomics.Backend.MassSpecData
                 // This won't be sufficient until there is a valid parser for all forms of NativeID.
                 // Using artificial scan number for now.
                 OffsetsMapInt.Add(offset.IdNum, offset.Offset);
-                IdToNativeMap.Add(offset.IdNum, offset.Ref);
-                NativeToIdMap.Add(offset.Ref, offset.IdNum);
+                IdNativeMap.Add(offset.IdNum, offset.Ref);
                 /*if (IndexType == IndexListType.Spectrum)
                 {
                     long id = Int64.Parse(offset.Ref.Substring(offset.Ref.LastIndexOfAny(new char[] {'=', 'F'}) + 1));
@@ -230,124 +211,12 @@ namespace InformedProteomics.Backend.MassSpecData
             {
                 OffsetsMapNative.Clear();
                 OffsetsMapInt.Clear();
-                IdToNativeMap.Clear();
-                NativeToIdMap.Clear();
+                IdNativeMap.Clear();
                 foreach (var offset in _offsets)
                 {
                     AddMapForOffset(offset);
                 }
             }
-        }
-
-        public static class NativeIdConversion
-        {
-            private static Dictionary<string, string> ParseNativeId(string nativeId)
-            {
-                var tokens = nativeId.Split(new char[] {'\t', ' ', '\n', '\r'}, StringSplitOptions.RemoveEmptyEntries);
-                var map = new Dictionary<string, string>();
-                foreach (var token in tokens)
-                {
-                    var equals = token.IndexOf('=');
-                    var name = token.Substring(0, equals);
-                    var value = token.Substring(equals + 1);
-                    map.Add(name, value);
-                }
-                return map;
-            }
-
-            public static bool TryGetScanNumberLong(string nativeId, out long num)
-            {
-                return long.TryParse(GetScanNumber(nativeId), out num);
-            }
-
-            public static bool TryGetScanNumberInt(string nativeId, out int num)
-            {
-                return int.TryParse(GetScanNumber(nativeId), out num);
-            }
-
-            // Code is ported from MSData.cpp in ProteoWizard
-            public static string GetScanNumber(string nativeId)
-            {
-                // TODO: Add interpreter for Waters' S0F1, S1F1, S0F2,... format
-                //switch (nativeIdFormat)
-                //{
-                //    case MS_spectrum_identifier_nativeID_format: // mzData
-                //        return value(id, "spectrum");
-                //
-                //    case MS_multiple_peak_list_nativeID_format: // MGF
-                //        return value(id, "index");
-                //
-                //    case MS_Agilent_MassHunter_nativeID_format:
-                //        return value(id, "scanId");
-                //
-                //    case MS_Thermo_nativeID_format:
-                //        // conversion from Thermo nativeIDs assumes default controller information
-                //        if (id.find("controllerType=0 controllerNumber=1") != 0)
-                //            return "";
-                //
-                //        // fall through to get scan
-                //
-                //    case MS_Bruker_Agilent_YEP_nativeID_format:
-                //    case MS_Bruker_BAF_nativeID_format:
-                //    case MS_scan_number_only_nativeID_format:
-                //        return value(id, "scan");
-                //
-                //    default:
-                //        if (bal::starts_with(id, "scan=")) return value(id, "scan");
-                //        else if (bal::starts_with(id, "index=")) return value(id, "index");
-                //        return "";
-                //}
-                if (nativeId.Contains("="))
-                {
-                    var map = ParseNativeId(nativeId);
-                    if (map.ContainsKey("spectrum"))
-                    {
-                        return map["spectrum"];
-                    }
-                    if (map.ContainsKey("index"))
-                    {
-                        return map["index"];
-                    }
-                    if (map.ContainsKey("scanId"))
-                    {
-                        return map["scanId"];
-                    }
-                    if (map.ContainsKey("scan"))
-                    {
-                        return map["scan"];
-                    }
-                }
-
-                // No equals sign, don't have parser breakdown
-                // Or key data not found in breakdown of nativeId
-                return nativeId;
-            }
-
-            //public static string GetNativeId(string scanNumber)
-            //{
-            //    switch (nativeIdFormat)
-            //    {
-            //        case MS_Thermo_nativeID_format:
-            //            return "controllerType=0 controllerNumber=1 scan=" + scanNumber;
-            //
-            //        case MS_spectrum_identifier_nativeID_format:
-            //            return "spectrum=" + scanNumber;
-            //
-            //        case MS_multiple_peak_list_nativeID_format:
-            //            return "index=" + scanNumber;
-            //
-            //        case MS_Agilent_MassHunter_nativeID_format:
-            //            return "scanId=" + scanNumber;
-            //
-            //        case MS_Bruker_Agilent_YEP_nativeID_format:
-            //        case MS_Bruker_BAF_nativeID_format:
-            //        case MS_scan_number_only_nativeID_format:
-            //            return "scan=" + scanNumber;
-            //
-            //        default:
-            //            return "";
-            //    }
-            //}
         }
 
         private readonly Dictionary<string, List<Param>> _referenceableParamGroups = new Dictionary<string, List<Param>>();
@@ -429,24 +298,20 @@ namespace InformedProteomics.Backend.MassSpecData
                 ArrayLength = 0;
             }
         }
-        #endregion
 
-        public int NumSpectra { get { return (int)_numSpectra; } }
+        private readonly List<Spectrum> _spectra = new List<Spectrum>();
 
-        #region Constructor
         /// <summary>
         /// Initialize a MzMlReader object
         /// </summary>
         /// <param name="filePath">Path to mzML file</param>
         /// <param name="randomAccess">If mzML reader should be configured for random access</param>
-        /// <param name="tryReducingMemoryUsage">If mzML reader should try to avoid reading all spectra into memory. This will reduce memory usage for a non-random access MzMLReader, as long as ReadMassSpectrum(int) isn't used.</param>
-        public MzMLReader(string filePath, bool randomAccess = false, bool tryReducingMemoryUsage = true)
+        public MzMLReader(string filePath, bool randomAccess = false)
         {
             _filePath = filePath;
             _instrument = Instrument.Unknown;
             _version = MzML_Version.mzML1_1_0;
             _randomAccess = randomAccess;
-            _reduceMemoryUsage = tryReducingMemoryUsage;
             _unzippedFilePath = _filePath;
 
             // Set a very large read buffer, it does decrease the read times for uncompressed files.
@@ -485,175 +350,59 @@ namespace InformedProteomics.Backend.MassSpecData
                 _fileReader.BaseStream.Position = 0;
             }
         }
-        #endregion
 
-        #region Public interface functions for reading
-        /// <summary>
-        /// Returns all mass spectra.
-        /// Uses "yield return" to allow processing one spectra at a time if called from a foreach loop statement.
-        /// </summary>
-        /// <returns></returns>
         public IEnumerable<Spectrum> ReadAllSpectra()
         {
-            if (!_randomAccess)
+            if (!_allRead && !_randomAccess)
             {
-                // Apparently the only way to effectively cascade yield return?
-                // If it works properly, it should be basically invisible
-                foreach (var spec in ReadAllSpectraNonRandom())
-                {
-                    yield return spec;
-                }
+                ReadMzMl();
             }
-            else
+            else if (!_allRead)
             {
-                // Apparently the only way to effectively cascade yield return?
-                // If it works properly, it should be basically invisible
-                foreach (var spec in ReadAllSpectraRandom())
+                if (!_haveIndex || !_haveMetaData)
                 {
-                    yield return spec;
+                    IndexMzMl(); // Read the index and metadata so that we have a count of spectra
                 }
+                for (int i = 0; i < _spectrumOffsets.Offsets.Count; i++)
+                {
+                    _spectra.Add(ReadMassSpectrum((int)(_spectrumOffsets.Offsets[i].IdNum)));
+                }
+                _allRead = true;
             }
+            return _spectra;
         }
 
-        /// <summary>
-        /// Returns a single spectrum from the file
-        /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        /// <remarks>If random access mode is turned on, this will respond quickly and use only as much memory as is needed to store the spectrum.
-        /// If random access mode is off, this will cause the memory usage reducing mode to shut of, and all spectra will be read into memory.</remarks>
         public Spectrum ReadMassSpectrum(int index)
         {
             // Proper functionality when not random access
             if (!_randomAccess)
             {
-                return ReadMassSpectrumNonRandom(index);
-            }
-            return ReadMassSpectrumRandom(index);
-        }
-        #endregion
-
-        #region Interface Helper Functions: Non-Random Access
-        /// <summary>
-        /// Read all mass spectra in the file, not using random access
-        /// Uses "yield return" to use less memory when called from a "foreach" statement
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerable<Spectrum> ReadAllSpectraNonRandom()
-        {
-            if (_reduceMemoryUsage)
-            {
-                _artificialScanNum = 1;
-                ReadMzMl();
-
-                while (_xmlReaderForYield.ReadState == ReadState.Interactive)
-                {
-                    // Handle exiting out properly at EndElement tags
-                    if (_xmlReaderForYield.NodeType != XmlNodeType.Element)
-                    {
-                        _xmlReaderForYield.Read();
-                        continue;
-                    }
-                    if (_xmlReaderForYield.Name == "spectrum")
-                    {
-                        // Schema requirements: zero to many instances of this element
-                        // Use reader.ReadSubtree() to provide an XmlReader that is only valid for the element and child nodes
-                        yield return ReadSpectrum(_xmlReaderForYield.ReadSubtree());
-                        // "spectrum" might not have any child nodes
-                        // We will either consume the EndElement, or the same element that was passed to ReadSpectrum (in case of no child nodes)
-                        _xmlReaderForYield.Read();
-                    }
-                    else
-                    {
-                        _xmlReaderForYield.Skip();
-                    }
-                }
-            }
-            else
-            {
                 if (!_allRead)
                 {
                     ReadMzMl();
                 }
-                foreach (var spec in _spectra)
-                {
-                    yield return spec;
-                }
+                return _spectra[index];
             }
-        }
-
-        /// <summary>
-        /// Read a single mass spectrum and return it.
-        /// Causes all spectra in the file to be loaded into memory
-        /// </summary>
-        /// <param name="index"></param>
-        private Spectrum ReadMassSpectrumNonRandom(long index)
-        {
-            if (!_allRead)
-            {
-                _artificialScanNum = 1;
-                _reduceMemoryUsage = false; // They called this on a non-random access reader, now they suffer the consequences.
-                ReadMzMl();
-            }
-            return _spectra[(int)index];
-        }
-        #endregion
-
-        #region Interface Helper Functions: Random Access
-        /// <summary>
-        /// Read all mass spectra in the file, using random access
-        /// Uses "yield return" to use less memory when called from a "foreach" statement
-        /// </summary>
-        /// <returns></returns>
-        private IEnumerable<Spectrum> ReadAllSpectraRandom()
-        {
             if (!_haveIndex || !_haveMetaData)
             {
-                ReadMzMl(); // Read the index and metadata so that the offsets get populated.
-            }
-            foreach (var specIndex in _spectrumOffsets.Offsets)
-            {
-                yield return ReadMassSpectrumRandom(specIndex.IdNum);
-            }
-        }
-
-        /// <summary>
-        /// Read a single mass spectrum and return it.
-        /// </summary>
-        /// <param name="index"></param>
-        private Spectrum ReadMassSpectrumRandom(long index)
-        {
-            if (!_haveIndex || !_haveMetaData)
-            {
-                ReadMzMl();
-            }
-
-            if (!_spectrumOffsets.OffsetsMapInt.ContainsKey(index))
-            {
-                return null;
+                IndexMzMl();
             }
 
             _fileReader.DiscardBufferedData();
             _fileReader.BaseStream.Position = _spectrumOffsets.OffsetsMapInt[index];
-            // Not allowed for a GZipStream.....
+                // Not allowed for a GZipStream.....
             using (var reader = XmlReader.Create(_fileReader, _xSettings))
             {
                 reader.MoveToContent();
                 return ReadSpectrum(reader.ReadSubtree());
             }
         }
-        #endregion
 
-        #region Cleanup functions
         /// <summary>
         /// Close out the file handle and delete any temp files
         /// </summary>
         public void Close()
         {
-            if (_xmlReaderForYield != null)
-            {
-                _xmlReaderForYield.Close();
-            }
             _fileReader.Close();
             _file.Close();
         }
@@ -686,13 +435,292 @@ namespace InformedProteomics.Backend.MassSpecData
             _spectra.Clear();
             _allRead = false;
         }
-        #endregion
 
-        #region Index reading functions
+        /// <summary>
+        /// Read and parse a .mzML file
+        /// Files are commonly larger than 100 MB, so use a streaming reader instead of a DOM reader
+        /// </summary>
+        private void ReadMzMl()
+        {
+            using (var outerReader = XmlReader.Create(_fileReader, _xSettings))
+            {
+                // Guarantee a move to the root node
+                outerReader.MoveToContent();
+                if (_encoding == null)
+                {
+                    _encoding = _fileReader.CurrentEncoding;
+                }
+                XmlReader reader = outerReader;
+                if (outerReader.Name == "indexedmzML")
+                {
+                    // Read to the mzML root tag, and ignore the extra indexedmzML data
+                    outerReader.ReadToDescendant("mzML");
+                    reader = outerReader.ReadSubtree();
+                    reader.MoveToContent();
+                }
+                string schemaName = reader.GetAttribute("xsi:schemaLocation");
+                // We automatically assume it uses the mzML_1.1.0 schema. Check for the old version.
+                //if (!schemaName.Contains("mzML1.1.0.xsd"))
+                if (schemaName.Contains("mzML1.0.0.xsd"))
+                {
+                    _version = MzML_Version.mzML1_0_0;
+                }
+                // Consume the mzML root tag
+                // Throws exception if we are not at the "mzML" tag.
+                // This is a critical error; we want to stop processing for this file if we encounter this error
+                reader.ReadStartElement("mzML");
+                // Read the next node - should be the first child node
+                while (reader.ReadState == ReadState.Interactive)
+                {
+                    // Handle exiting out properly at EndElement tags
+                    if (reader.NodeType != XmlNodeType.Element)
+                    {
+                        reader.Read();
+                        continue;
+                    }
+                    // Handle each 1st level as a chunk
+                    switch (reader.Name)
+                    {
+                        case "cvList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "fileDescription":
+                            // Schema requirements: one instance of this element
+                            ReadFileDescription(reader.ReadSubtree());
+                            reader.ReadEndElement(); // "fileDescription" must have child nodes
+                            break;
+                        case "referenceableParamGroupList":
+                            // Schema requirements: zero to one instances of this element
+                            ReadReferenceableParamGroupList(reader.ReadSubtree());
+                            reader.ReadEndElement(); // "referenceableParamGroupList" must have child nodes
+                            break;
+                        case "sampleList":
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "softwareList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "scanSettingsList":
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "instrumentConfigurationList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "dataProcessingList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "acquisitionSettingsList": // mzML 1.0.0 compatibility
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "run":
+                            // Schema requirements: one instance of this element
+                            // Use reader.ReadSubtree() to provide an XmlReader that is only valid for the element and child nodes
+                            ReadRunData(reader.ReadSubtree());
+                            // "run" might not have any child nodes
+                            // We will either consume the EndElement, or the same element that was passed to ReadRunData (in case of no child nodes)
+                            reader.Read();
+                            break;
+                        default:
+                            // We are not reading anything out of the tag, so bypass it
+                            reader.Skip();
+                            break;
+                    }
+                }
+                _haveMetaData = true;
+                _allRead = true;
+            }
+        }
+
+        /// <summary>
+        /// Read and parse a .mzML file
+        /// Files are commonly larger than 100 MB, so use a streaming reader instead of a DOM reader
+        /// </summary>
+        private void IndexMzMl()
+        {
+            if (_haveIndex && _haveMetaData)
+            {
+                return;
+            }
+            // Handle disposal of allocated object correctly
+            using (var outerReader = XmlReader.Create(_fileReader, _xSettings))
+            {
+                // Guarantee a move to the root node
+                outerReader.MoveToContent();
+                if (_encoding == null)
+                {
+                    _encoding = _fileReader.CurrentEncoding;
+                }
+                XmlReader indexReader = null;
+                bool validIndex = false;
+                XmlReader reader = outerReader;
+                if (outerReader.Name == "indexedmzML")
+                {
+                    indexReader = outerReader;
+                    // Read to the mzML root tag, and ignore the extra indexedmzML data
+                    outerReader.ReadToDescendant("mzML");
+                    // TODO: run to the end of the file (using stream.position = stream.length) and jump backwards to read the index first, and then read the file for needed data
+                    validIndex = ReadIndexFromEnd();
+                    reader = outerReader.ReadSubtree();
+                    reader.MoveToContent();
+                }
+                string schemaName = reader.GetAttribute("xsi:schemaLocation");
+                // We automatically assume it uses the mzML_1.1.0 schema. Check for the old version.
+                //if (!schemaName.Contains("mzML1.1.0.xsd"))
+                if (schemaName.Contains("mzML1.0.0.xsd"))
+                {
+                    _version = MzML_Version.mzML1_0_0;
+                }
+                // Consume the mzML root tag
+                // Throws exception if we are not at the "mzML" tag.
+                // This is a critical error; we want to stop processing for this file if we encounter this error
+                reader.ReadStartElement("mzML");
+                bool continueReading = true;
+                // Read the next node - should be the first child node
+                while (reader.ReadState == ReadState.Interactive && continueReading)
+                {
+                    // Handle exiting out properly at EndElement tags
+                    if (reader.NodeType != XmlNodeType.Element)
+                    {
+                        reader.Read();
+                        continue;
+                    }
+                    // Handle each 1st level as a chunk
+                    switch (reader.Name)
+                    {
+                        case "cvList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "fileDescription":
+                            // Schema requirements: one instance of this element
+                            if (!_haveMetaData)
+                            {
+                                ReadFileDescription(reader.ReadSubtree());
+                                reader.ReadEndElement(); // "fileDescription" must have child nodes
+                            }
+                            else
+                            {
+                                reader.Skip();
+                            }
+                            break;
+                        case "referenceableParamGroupList":
+                            // Schema requirements: zero to one instances of this element
+                            if (!_haveMetaData)
+                            {
+                                ReadReferenceableParamGroupList(reader.ReadSubtree());
+                                reader.ReadEndElement(); // "referenceableParamGroupList" must have child nodes
+                            }
+                            else
+                            {
+                                reader.Skip();
+                            }
+                            break;
+                        case "sampleList":
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "softwareList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "scanSettingsList":
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "instrumentConfigurationList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "dataProcessingList":
+                            // Schema requirements: one instance of this element
+                            reader.Skip();
+                            break;
+                        case "acquisitionSettingsList": // mzML 1.0.0 compatibility
+                            // Schema requirements: zero to one instances of this element
+                            reader.Skip();
+                            break;
+                        case "run":
+                            // Schema requirements: one instance of this element
+                            // Use reader.ReadSubtree() to provide an XmlReader that is only valid for the element and child nodes
+                            if (!validIndex)
+                            {
+                                ReadRunForIndices();
+                                // "run" might not have any child nodes
+                                // We will either consume the EndElement, or the same element that was passed to ReadRunData (in case of no child nodes)
+                                // Kill the read, we already read the index and there isn't anything after the run that we're worried about
+                                continueReading = false;
+                                // don't worry about the skip, since it can take some time.
+                                //reader.Skip();
+                            }
+                            else
+                            {
+                                // Kill the read, since we already have a valid index
+                                continueReading = false;
+                                // don't worry about the skip, since it can take some time.
+                                //reader.Skip();
+                            }
+                            break;
+                        default:
+                            // We are not reading anything out of the tag, so bypass it
+                            reader.Skip();
+                            break;
+                    }
+                }
+                reader.Close(); // Close the inner reader
+                _haveMetaData = true;
+                /* // Now read before any of the metadata.
+                if (indexReader != null)
+                {
+                    reader = indexReader;
+                    //_reader.ReadStartElement("mzML");
+                    // Read the next node - should be the first child node
+                    while (reader.ReadState == ReadState.Interactive)
+                    {
+                        // Handle exiting out properly at EndElement tags
+                        if (reader.NodeType != XmlNodeType.Element)
+                        {
+                            reader.Read();
+                            continue;
+                        }
+                        // Handle each 1st level as a chunk
+                        switch (reader.Name)
+                        {
+                            case "indexList":
+                                // Schema requirements: one instance of this element
+                                ReadIndexList(reader.ReadSubtree());
+                                reader.ReadEndElement(); // "fileDescription" must have child nodes
+                                break;
+                            case "indexListOffset":
+                                // Schema requirements: zero to one instances of this element
+                                _indexListOffset = Int64.Parse(reader.ReadElementContentAsString());
+                                break;
+                            case "fileChecksum":
+                                // Schema requirements: zero to one instances of this element
+                                reader.Skip();
+                                break;
+                            default:
+                                // We are not reading anything out of the tag, so bypass it
+                                reader.Skip();
+                                break;
+                        }
+                    }
+                    reader.Close();
+                } */
+            }
+        }
+
         /// <summary>
         /// Find and read the index information, starting at the end of the file...
         /// </summary>
-        private void ReadIndexFromEnd()
+        /// <returns>True if the index is valid</returns>
+        private bool ReadIndexFromEnd()
         {
             var stream = new FileStream(_unzippedFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
             long testPos = stream.Length;
@@ -813,14 +841,14 @@ namespace InformedProteomics.Backend.MassSpecData
                     collisions[index.Offset]++;
                 }
             }
-            _haveIndex = isValid;
+            return isValid;
         }
 
         /// <summary>
         /// Handle the child nodes of the run element
         /// Called by IndexMzMl (xml hierarchy)
         /// </summary>
-        private void ReadRunForOffsets()
+        private void ReadRunForIndices()
         {
             // Set the buffer to 1 byte (minimum allowed value), since we need accurate positions for the indices
             Stream file = new FileStream(_unzippedFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 1);
@@ -1056,203 +1084,7 @@ namespace InformedProteomics.Backend.MassSpecData
             }
             reader.Close();
         }
-        #endregion
 
-        #region Root tag reader
-        /// <summary>
-        /// Read and parse a .mzML file
-        /// Files are commonly larger than 100 MB, so use a streaming reader instead of a DOM reader
-        /// Vary conditional, depending on configuration
-        /// </summary>
-        private void ReadMzMl()
-        {
-            if (_randomAccess && _haveIndex && _haveMetaData)
-            {
-                return;
-            }
-            // Handle disposal of allocated object correctly
-            var reader = XmlReader.Create(_fileReader, _xSettings);
-            // Guarantee a move to the root node
-            reader.MoveToContent();
-            if (_encoding == null)
-            {
-                _encoding = _fileReader.CurrentEncoding;
-            }
-            XmlReader indexReader = null;
-            if (reader.Name == "indexedmzML")
-            {
-                indexReader = reader;
-                // Read to the mzML root tag, and ignore the extra indexedmzML data
-                reader.ReadToDescendant("mzML");
-                if (_randomAccess && !_haveIndex)
-                {
-                    // run to the end of the file (using stream.position = stream.length) and jump backwards to read the index first, and then read the file for needed data
-                    ReadIndexFromEnd();
-                }
-                reader = reader.ReadSubtree();
-                reader.MoveToContent();
-            }
-            string schemaName = reader.GetAttribute("xsi:schemaLocation");
-            // We automatically assume it uses the mzML_1.1.0 schema. Check for the old version.
-            //if (!schemaName.Contains("mzML1.1.0.xsd"))
-            if (schemaName.Contains("mzML1.0.0.xsd"))
-            {
-                _version = MzML_Version.mzML1_0_0;
-            }
-            // Consume the mzML root tag
-            // Throws exception if we are not at the "mzML" tag.
-            // This is a critical error; we want to stop processing for this file if we encounter this error
-            reader.ReadStartElement("mzML");
-            bool continueReading = true;
-            // Read the next node - should be the first child node
-            while (reader.ReadState == ReadState.Interactive && continueReading)
-            {
-                // Handle exiting out properly at EndElement tags
-                if (reader.NodeType != XmlNodeType.Element)
-                {
-                    reader.Read();
-                    continue;
-                }
-                // Handle each 1st level as a chunk
-                switch (reader.Name)
-                {
-                    case "cvList":
-                        // Schema requirements: one instance of this element
-                        reader.Skip();
-                        break;
-                    case "fileDescription":
-                        // Schema requirements: one instance of this element
-                        if (!_randomAccess || (_randomAccess && !_haveMetaData))
-                        {
-                            ReadFileDescription(reader.ReadSubtree());
-                            reader.ReadEndElement(); // "fileDescription" must have child nodes
-                        }
-                        else
-                        {
-                            reader.Skip();
-                        }
-                        break;
-                    case "referenceableParamGroupList":
-                        // Schema requirements: zero to one instances of this element
-                        if (!_randomAccess || (_randomAccess && !_haveMetaData))
-                        {
-                            ReadReferenceableParamGroupList(reader.ReadSubtree());
-                            reader.ReadEndElement(); // "referenceableParamGroupList" must have child nodes
-                        }
-                        else
-                        {
-                            reader.Skip();
-                        }
-                        break;
-                    case "sampleList":
-                        // Schema requirements: zero to one instances of this element
-                        reader.Skip();
-                        break;
-                    case "softwareList":
-                        // Schema requirements: one instance of this element
-                        reader.Skip();
-                        break;
-                    case "scanSettingsList":
-                        // Schema requirements: zero to one instances of this element
-                        reader.Skip();
-                        break;
-                    case "instrumentConfigurationList":
-                        // Schema requirements: one instance of this element
-                        reader.Skip();
-                        break;
-                    case "dataProcessingList":
-                        // Schema requirements: one instance of this element
-                        reader.Skip();
-                        break;
-                    case "acquisitionSettingsList": // mzML 1.0.0 compatibility
-                        // Schema requirements: zero to one instances of this element
-                        reader.Skip();
-                        break;
-                    case "run":
-                        // Schema requirements: one instance of this element
-                        // Use reader.ReadSubtree() to provide an XmlReader that is only valid for the element and child nodes
-                        ReadRunData(reader.ReadSubtree());
-                        if (_randomAccess || _reduceMemoryUsage)
-                        {
-                            // Kill the read, since we already have a valid index
-                            continueReading = false;
-                            // don't worry about the skip, since it can take some time.
-                            //reader.Skip();
-                        }
-                        else
-                        {
-                            // "run" might not have any child nodes
-                            // We will either consume the EndElement, or the same element that was passed to ReadRunData (in case of no child nodes)
-                            reader.Read();
-                        }
-                        break;
-                    default:
-                        // We are not reading anything out of the tag, so bypass it
-                        reader.Skip();
-                        break;
-                }
-            }
-            _haveMetaData = true;
-            if (!_randomAccess && !_reduceMemoryUsage)
-            {
-                _allRead = true;
-            }
-            //_numSpectra = _spectrumOffsets.Offsets.Count;
-            /* // Now read before any of the metadata.
-            if (indexReader != null)
-            {
-                reader = indexReader;
-                //_reader.ReadStartElement("mzML");
-                // Read the next node - should be the first child node
-                while (reader.ReadState == ReadState.Interactive)
-                {
-                    // Handle exiting out properly at EndElement tags
-                    if (reader.NodeType != XmlNodeType.Element)
-                    {
-                        reader.Read();
-                        continue;
-                    }
-                    // Handle each 1st level as a chunk
-                    switch (reader.Name)
-                    {
-                        case "indexList":
-                            // Schema requirements: one instance of this element
-                            ReadIndexList(reader.ReadSubtree());
-                            reader.ReadEndElement(); // "fileDescription" must have child nodes
-                            break;
-                        case "indexListOffset":
-                            // Schema requirements: zero to one instances of this element
-                            _indexListOffset = Int64.Parse(reader.ReadElementContentAsString());
-                            break;
-                        case "fileChecksum":
-                            // Schema requirements: zero to one instances of this element
-                            reader.Skip();
-                            break;
-                        default:
-                            // We are not reading anything out of the tag, so bypass it
-                            reader.Skip();
-                            break;
-                    }
-                }
-                reader.Close();
-            } */
-            if (!_reduceMemoryUsage)
-            {
-                // Don't worry about closing the subtree readers, just close the root reader.
-                // reader is the root if it is not an indexed mzML file.
-                if (indexReader == null)
-                {
-                    reader.Close();
-                }
-                else
-                {
-                    indexReader.Close();
-                }
-            }
-        }
-        #endregion
-
-        #region Metadata tag readers
         /// <summary>
         /// Handle the child nodes of the fileDescription element
         /// Called by ReadMzML (xml hierarchy)
@@ -1589,9 +1421,7 @@ namespace InformedProteomics.Backend.MassSpecData
             reader.Close();
             return userParam;
         }
-        #endregion
 
-        #region Run and SpectrumList Tags
         /// <summary>
         /// Handle the child nodes of the run element
         /// Called by ReadMzML (xml hierarchy)
@@ -1631,11 +1461,6 @@ namespace InformedProteomics.Backend.MassSpecData
                         // Schema requirements: zero to one instances of this element
                         // Use reader.ReadSubtree() to provide an XmlReader that is only valid for the element and child nodes
                         ReadSpectrumList(reader.ReadSubtree());
-                        if (_randomAccess || _reduceMemoryUsage)
-                        {
-                            // Don't worry about reading anything more, and closing the XmlReader will take more time than it is worth.
-                            return;
-                        }
                         // "spectrumList" might not have any child nodes
                         // We will either consume the EndElement, or the same element that was passed to ReadSpectrumList (in case of no child nodes)
                         reader.Read();
@@ -1660,26 +1485,7 @@ namespace InformedProteomics.Backend.MassSpecData
         private void ReadSpectrumList(XmlReader reader)
         {
             reader.MoveToContent();
-            _numSpectra = Convert.ToInt64(reader.GetAttribute("count"));
-            if (_randomAccess)
-            {
-                // randomAccess: We only read to this point for the count of spectra.
-                // We only want to read for offsets if we weren't able to get valid offsets from an index
-                //reader.Close(); // Closing can be slow for a subtree...
-                if (!_haveIndex)
-                {
-                    ReadRunForOffsets();
-                }
-                return;
-            }
             reader.ReadStartElement("spectrumList"); // Throws exception if we are not at the "SpectrumIdentificationList" tag.
-            if (_reduceMemoryUsage)
-            {
-                // Kill the read, we are at the first spectrum
-                _xmlReaderForYield = reader;
-                // If in the "ReadAllSpectra" call stack, we don't want the reader closed - we still need the subtree
-                return;
-            }
             while (reader.ReadState == ReadState.Interactive)
             {
                 // Handle exiting out properly at EndElement tags
@@ -1704,9 +1510,7 @@ namespace InformedProteomics.Backend.MassSpecData
             }
             reader.Close();
         }
-        #endregion
 
-        #region Spectrum Tag
         /// <summary>
         /// Handle a single spectrum element and child nodes
         /// Called by ReadSpectrumList (xml hierarchy)
@@ -1724,25 +1528,22 @@ namespace InformedProteomics.Backend.MassSpecData
             {
                 nativeId = reader.GetAttribute("nativeID"); // Native ID in mzML_1.0.0
             }
-
-            int scanNum = -1;
+            //int scanNum = Convert.ToInt32(spectrumId.Substring(spectrumId.LastIndexOf("scan=") + 5));
+            // TODO: Get rid of this hack, use something with nativeID. May involve special checks for mzML version
+            int scanNum = (int)(_artificialScanNum++);
             // If a random access reader, there is already a scan number stored, based on the order of the index. Use it instead.
-            if (_randomAccess)
+            scanNum = (int)(_spectrumOffsets.OffsetsMapNative[nativeId]);
+            // This won't work; removed until a good parser for most forms of NativeID is available.
+            /*// Find last non-digit
+            int pos = 0;
+            for (int i = 0; i < nativeId.Length; i++)
             {
-                scanNum = (int) (_spectrumOffsets.NativeToIdMap[nativeId]);
-            }
-            else
-            {
-                scanNum = (int)(_artificialScanNum++);
-                // Interpret the NativeID (if the format has an interpreter) and use it instead of the artificial number.
-                // TODO: Better handling than the artificial ID for other nativeIDs (ones currently not supported)
-                int num = 0;
-                if (NativeIdConversion.TryGetScanNumberInt(nativeId, out num))
+                if (!char.IsDigit(nativeId[i]))
                 {
-                    scanNum = num;
+                    pos = i;
                 }
             }
-
+            scanNum = Int32.Parse(nativeId.Substring(pos + 1));*/
             int defaultArraySize = Convert.ToInt32(reader.GetAttribute("defaultArrayLength"));
             reader.ReadStartElement("spectrum"); // Throws exception if we are not at the "spectrum" tag.
             bool is_ms_ms = false;
@@ -1884,7 +1685,6 @@ namespace InformedProteomics.Backend.MassSpecData
                     intensities = bda;
                 }
             }
-            
             if (!centroided)
             {
                 // Centroid spectrum
@@ -1948,9 +1748,7 @@ namespace InformedProteomics.Backend.MassSpecData
             
             return spectrum;
         }
-        #endregion
 
-        #region Spectrum internal Tags
         /// <summary>
         /// mzML_1.0.0 compatibility
         /// Handle a single spectrumDescription element and child nodes
@@ -2799,6 +2597,5 @@ namespace InformedProteomics.Backend.MassSpecData
             //msInflated.Read(newBytes, 0, (int)msInflated.Length);
             return newBytes;
         }
-        #endregion
     }
 }
