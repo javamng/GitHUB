@@ -1559,7 +1559,10 @@ namespace InformedProteomics.Backend.MassSpecData
             // TODO: Get rid of this hack, use something with nativeID. May involve special checks for mzML version
             int scanNum = (int)(_artificialScanNum++);
             // If a random access reader, there is already a scan number stored, based on the order of the index. Use it instead.
-            scanNum = (int)(_spectrumOffsets.OffsetsMapNative[nativeId]);
+            if (_randomAccess)
+            {
+                scanNum = (int) (_spectrumOffsets.OffsetsMapNative[nativeId]);
+            }
             // This won't work; removed until a good parser for most forms of NativeID is available.
             /*// Find last non-digit
             int pos = 0;
