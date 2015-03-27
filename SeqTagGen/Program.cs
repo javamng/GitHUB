@@ -16,15 +16,7 @@ namespace SeqTagGen
     class Program
     {
         public const string Name = "SeqTagGen";
-        public static string Version
-        {
-            get
-            {
-                var programVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                return string.Format("version {0}.{1}.{2} (May 07, 2015)", programVersion.Major, programVersion.Minor, programVersion.Build);
-            }
-        }
-
+        public const string Version = "0.1 (March 23, 2015)";
         [DllImport("kernel32.dll")]
         public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
 
@@ -50,10 +42,9 @@ namespace SeqTagGen
             _paramDic = new Dictionary<string, string>
             {
                 {"-i", null},
-                {"-o", null},
                 {"-t", "5"},
                 {"-minLen", "5"},
-                {"-maxTags", "-1"},
+                {"-maxTags", "100"},
                 {"-maxThreads", "0"},
             };
 
@@ -73,7 +64,6 @@ namespace SeqTagGen
             _minLen = Int32.Parse(_paramDic["-minLen"]);
             _maxTags = Int32.Parse(_paramDic["-maxTags"]);
             _inputPath = _paramDic["-i"];
-            _outFolderPath = _paramDic["-o"];
 
             var attr = File.GetAttributes(_inputPath);
             if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
@@ -114,13 +104,6 @@ namespace SeqTagGen
         {
             var rawFile = path;
             var outFile = Path.ChangeExtension(path, "seqtag");
-            //var tmpOutFile = Path.ChangeExtension(path, "tmp.seqtag");
-
-            if (_outFolderPath != null)
-            {
-                if (!Directory.Exists(_outFolderPath)) Directory.CreateDirectory(_outFolderPath);
-                outFile = _outFolderPath + @"\" + Path.GetFileName(outFile);
-            }
 
             if (File.Exists(outFile))
             {
@@ -134,45 +117,37 @@ namespace SeqTagGen
                 return;
             }
 
-            var tmpOutFile = Path.ChangeExtension(outFile, "seqtag.tmp");
-
             var stopwatch = Stopwatch.StartNew();
             Console.WriteLine("Input data : {0}", rawFile);
             var run = PbfLcMsRun.GetLcMsRun(rawFile, path.EndsWith(".mzML") ? MassSpecDataType.MzMLFile : MassSpecDataType.XCaliburRun);
             var ms2ScanNums = run.GetScanNumbers(2);
             var totalScans = ms2ScanNums.Count;
-            
+            var tmpOutFile = Path.ChangeExtension(path, "tmp.seqtag");
             var tmpWriter = new StreamWriter(tmpOutFile);
 
-            tmpWriter.WriteLine("ScanNum\tSequenceTag\tIsPrefix\tFlankingMass\tRankSumPvalue\tMassRMSE");
+            tmpWriter.WriteLine("ScanNum\tSequenceTag\tIsPrefix\tFlankingMass");
 
             var avgTags = 0;
             var nProcessed = 0;
             foreach (var scanNum in ms2ScanNums)
             {
                 var ms2Spec = run.GetSpectrum(scanNum) as ProductSpectrum;
-                
                 var tagFinder = new SequenceTagFinder(ms2Spec, _tolerance, _minLen);
 
                 var nTags = 0;
                 foreach (var tag in tagFinder.FindSequenceTags())
                 {
                     var flankingMass = tagFinder.DeconvolutedPeaks[tag[0].Node1].Mass;
-                    
-
                     nTags++;
                     if (tag.Count >= 6 || (nTags < _maxTags && _maxTags > 0))
                     {
-                        double[] rmse;
-                        var tagStrSet = tag.GetTagStrings(out rmse);
-                        for(var t = 0; t < tagStrSet.Length; t++)
+                        foreach (var tagStr in tag.GetTagStrings())
                         {
-                            tmpWriter.WriteLine("{0}\t{1}\t1\t{2}\t{3}\t{4}", scanNum, tagStrSet[t], flankingMass, tag.Score, rmse[t]);
-                            tmpWriter.WriteLine("{0}\t{1}\t0\t{2}\t{3}\t{4}", scanNum, SequenceTag.Reverse(tagStrSet[t]), flankingMass, tag.Score, rmse[t]);
+                            tmpWriter.WriteLine("{0}\t{1}\t1\t{2}", scanNum, tagStr, flankingMass);
+                            tmpWriter.WriteLine("{0}\t{1}\t0\t{2}", scanNum, SequenceTag.Reverse(tagStr), flankingMass);
                         }    
                     }
                 }
-
                 nProcessed++;
                 avgTags += nTags;
 
@@ -201,7 +176,6 @@ namespace SeqTagGen
         private static Tolerance _tolerance;
         private static int _minLen;
         private static string _inputPath;
-        private static string _outFolderPath;
         private static int _maxTags;
         private static Dictionary<string, string> _paramDic;
         private static void PrintUsageInfo(string message = null)
@@ -211,10 +185,9 @@ namespace SeqTagGen
             Console.WriteLine(
                 "Usage: " + Name + ".exe\n" +
                 "\t[-i InputFolder or InputFile]\n" +
-                "\t[-o OutFolder (default: InputFolder)]\n" +
                 "\t[-t Tolerance (default: 5 ppm)]\n"+
                 "\t[-minLen MinSequenceTagLength] (minimum length of sequence tag, default: 5)\n" +
-                "\t[-maxTags MaxNumberOfSequenceTags] (maximum number of sequence tags per spectrum, default: -1, unlimited: -1)\n" +
+                "\t[-maxTags MaxNumberOfSequenceTags] (maximum number of sequence tags per spectrum, default: 100, unlimited: -1)\n" +
                 "\t[-maxThreads 0 (default: 0 (no limit))]\n"
                 );
         }

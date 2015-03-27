@@ -36,8 +36,7 @@ namespace InformedProteomics.Backend.SequenceTag
 
         public int CompareTo(SequenceTag other)
         {
-            //return -Score.CompareTo(other.Score); // negative log
-            return Score.CompareTo(other.Score);
+            return -Score.CompareTo(other.Score);
         }
 
         public override bool Equals(object obj)
@@ -48,7 +47,7 @@ namespace InformedProteomics.Backend.SequenceTag
             return Equals((SequenceTag)obj);
         }
 
-        public string[] GetTagStrings(out double[] rmse)
+        public string[] GetTagStrings()
         {
             var listOfAminoAcids = new List<List<KeyValuePair<double, char>>>(Count);
 
@@ -61,7 +60,7 @@ namespace InformedProteomics.Backend.SequenceTag
             var indexArray = new int[Count];
             var totalCombinations = listOfAminoAcids.Aggregate(1, (current, x) => current * x.Count);
             var result = new string[totalCombinations];
-            rmse = new double[totalCombinations];
+            var rmse = new double[totalCombinations];
 
             for (var e = 0; e < totalCombinations; e ++)
             {
