@@ -20,7 +20,7 @@ namespace InformedProteomics.TopDown.TagBasedSearch
         public TagMatchFinder(
             ProductSpectrum spec,
             IScorer ms2Scorer,
-            TargetMs1FeatureMatrix featureFinder,
+            Ms2FeatureQuntification featureFinder,
             string proteinSequence, 
             Tolerance tolerance, 
             AminoAcidSet aaSet, 
@@ -158,7 +158,7 @@ namespace InformedProteomics.TopDown.TagBasedSearch
         private readonly ProductSpectrum _spec;
         private readonly IScorer _ms2Scorer;
         
-        private readonly TargetMs1FeatureMatrix _featureFinder;
+        private readonly Ms2FeatureQuntification _featureFinder;
         private readonly string _proteinSequence;
 
         private readonly Tolerance _tolerance;
@@ -238,8 +238,13 @@ namespace InformedProteomics.TopDown.TagBasedSearch
 
                 if (!spec.IsolationWindow.Contains(mostAbundantIsotopeMz)) continue;
 
-                var feature = new TargetFeature(sequenceMass, charge, spec.ScanNum);
-                
+                var feature = new Ms2Feature()
+                {
+                    Charge = charge,
+                    ScanNum = spec.ScanNum,
+                    Mass = sequenceMass,
+                };
+
                 if (_featureFinder != null)
                 {
                     var ms1Corr = _featureFinder.GetMs1EvidenceScore(feature);

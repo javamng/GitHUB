@@ -5,7 +5,6 @@ using InformedProteomics.Backend.Data.Sequence;
 using InformedProteomics.Backend.Data.Spectrometry;
 using InformedProteomics.Backend.Database;
 using InformedProteomics.Backend.MassSpecData;
-using InformedProteomics.Backend.Quantification;
 using InformedProteomics.TopDown.PostProcessing;
 using InformedProteomics.TopDown.Scoring;
 
@@ -53,7 +52,7 @@ namespace InformedProteomics.TopDown.TagBasedSearch
         {
             _run = run;
             _ms2Scorer = ms2Scorer;
-            _featureFinder = new TargetMs1FeatureMatrix(run);
+            _featureFinder = new Ms2FeatureQuntification(run);
             _tagParser = tagParser;
             _fastaDb = fastaDb;
             _searchableDb = new SearchableDatabase(fastaDb);
@@ -63,20 +62,15 @@ namespace InformedProteomics.TopDown.TagBasedSearch
             _maxSequenceMass = maxSequenceMass;
             _minProductIonCharge = minProductIonCharge;
             _maxProductIonCharge = maxProductIonCharge;
-            MinScan = int.MinValue;
-            MaxScan = int.MaxValue;
         }
 
-
-        public int MinScan { get; set; }
-        public int MaxScan { get; set; }
 
         public void RunSearch()
         {
             Console.WriteLine("Scan\tSequence\tModifications\tMass\tCharge\tScore\tNTermScore\tCTermScore\tProteinName\tStartIndex\tEndIndex\tProteinLength");
             foreach (var ms2ScanNum in _tagParser.GetScanNums())
             {
-                if(ms2ScanNum >= MinScan && ms2ScanNum <= MaxScan) RunSearch(ms2ScanNum);
+                RunSearch(ms2ScanNum);
             }
         }
 
@@ -106,7 +100,7 @@ namespace InformedProteomics.TopDown.TagBasedSearch
                     tagSequenceMatch.ProteinName,
                     tagMatch.StartIndex,
                     tagMatch.EndIndex,
-                    _fastaDb.GetProteinLength(tagSequenceMatch.ProteinName)
+                    tagSequenceMatch.Sequence.Length
                     );
             }
         }
@@ -213,7 +207,7 @@ namespace InformedProteomics.TopDown.TagBasedSearch
         private readonly FastaDatabase _fastaDb;
         private readonly SearchableDatabase _searchableDb;
 
-        private readonly TargetMs1FeatureMatrix _featureFinder; 
+        private readonly Ms2FeatureQuntification _featureFinder; 
 
         private readonly Tolerance _tolerance;
         private readonly AminoAcidSet _aaSet;
