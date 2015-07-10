@@ -200,15 +200,16 @@ namespace InformedProteomics.Test
 
             const int minScanNum = 46454;   // 635.43
             const int maxScanNum = 46661;   // 638.90
+            const int MAX_POINTS = 50;
 
             var run = PbfLcMsRun.GetLcMsRun(TestRawFilePath) as PbfLcMsRun;
             if (run == null) return;
             var summedSpec = run.GetSummedMs1Spectrum(minScanNum, maxScanNum);
             summedSpec.FilterNoise(50.0);
-//            summedSpec.Display();
+            // summedSpec.Display(MAX_POINTS);
 
             var deconvoluted = ProductScorerBasedOnDeconvolutedSpectra.GetDeconvolutedSpectrum(summedSpec, 2, 45, new Tolerance(10), 0.9, 2);
-            deconvoluted.Display();
+            deconvoluted.Display(MAX_POINTS);
         }
 
         [Test]
@@ -225,11 +226,13 @@ namespace InformedProteomics.Test
 
             const int minScanNum = 46454;
             const int maxScanNum = 46661;
+            const int MAX_POINTS = 50;
 
             var run = PbfLcMsRun.GetLcMsRun(TestRawFilePath) as PbfLcMsRun;
             if (run == null) return;
             var summedSpec = run.GetSummedMs1Spectrum(minScanNum, maxScanNum);
-            summedSpec.Display();
+
+            summedSpec.Display(MAX_POINTS);
         }
 
         [Test]
@@ -257,8 +260,8 @@ namespace InformedProteomics.Test
                     Math.Min(scanNum + windowSize, run.MaxLcScan));
             }
             sw.Stop();
-            var sec = sw.ElapsedTicks / (double)System.Diagnostics.Stopwatch.Frequency;
-            Console.WriteLine(@"{0:f4} sec", sec);
+            
+            Console.WriteLine(@"{0:f4} sec", sw.Elapsed.TotalSeconds);
         }
 
         [Test]
@@ -389,51 +392,11 @@ namespace InformedProteomics.Test
             const double maxMz = 10000.0;    // 2000.0
             var minBinNum = comparer.GetBinNumber(minMz);
             var maxBinNum = comparer.GetBinNumber(maxMz);
-            Console.WriteLine("NumBins: " + (maxBinNum - minBinNum));
-        }
+            var numBins = maxBinNum - minBinNum;
+            Console.WriteLine(@"NumBins: " + numBins);
 
-        [Test]
-        public void TestGeneringAllXics()
-        {
-            var methodName = MethodBase.GetCurrentMethod().Name;
-            TestUtils.ShowStarting(methodName);
-
-            if (!File.Exists(TestRawFilePath))
-            {
-                Console.WriteLine(@"Warning: Skipping test " + methodName + @" since file not found: " + TestRawFilePath);
-                return;
-            }
-
-            var run = PbfLcMsRun.GetLcMsRun(TestRawFilePath, 0.0, 0.0);
-            //var run = InMemoryLcMsRun.GetLcMsRun(TestRawFilePath, MassSpecDataType.XCaliburRun, 0.0, 0.0);
-            Assert.True(run != null);
-            var comparer = new MzComparerWithBinning(27);
-            const double minMz = 600.0; // 600.0
-            const double maxMz = 2000.0;    // 2000.0
-            var minBinNum = comparer.GetBinNumber(minMz);
-            var maxBinNum = comparer.GetBinNumber(maxMz);
-            Console.WriteLine("NumBins: " + (maxBinNum - minBinNum));
-            var sw = new Stopwatch();
-            sw.Start();
-            var numBinsProcessed = 0;
-            for (var binNum = minBinNum; binNum <= maxBinNum; binNum++)
-            {
-//                if (binNum < 33880544) continue;
-//                Console.WriteLine(binNum);
-                var mzStart = comparer.GetMzStart(binNum);
-                var mzEnd = comparer.GetMzEnd(binNum);
-                //var between = 0.4*mz + 0.6*mzNext;
-                //Console.WriteLine(comparer.GetBinNumber(mz) + " " + comparer.GetBinNumber(between) + " " + comparer.GetBinNumber(mzNext));
-                //Assert.True(binNum == comparer.GetBinNumber(mzNextMinusEpsilon));
-                //run.GetFullPrecursorIonExtractedIonChromatogram(mzStart, mzEnd);
-                run.GetFullPrecursorIonExtractedIonChromatogramVector(mzStart, mzEnd);
-                //run.GetPrecursorExtractedIonChromatogram(mzStart, mzEnd);
-                //if(++numBinsProcessed % 1000 == 0) Console.WriteLine(numBinsProcessed);
-            }
-            sw.Stop();
-            var sec = sw.ElapsedTicks / (double)Stopwatch.Frequency;
-            Console.WriteLine(@"{0:f4} sec", sec);
-        }
+            Assert.IsTrue(numBins == 16384);
+        }        
 
         [Test]
         public void TestGeneratingXicsOfAllCharges()
@@ -446,8 +409,7 @@ namespace InformedProteomics.Test
                 Console.WriteLine(@"Warning: Skipping test " + methodName + @" since file not found: " + TestRawFilePath);
                 return;
             }
-
-            //var run = InMemoryLcMsRun.GetLcMsRun(TestRawFilePath, MassSpecDataType.XCaliburRun, 1.4826, 0.0);
+            
             var run = PbfLcMsRun.GetLcMsRun(TestRawFilePath, 0.0, 0.0);
             var comparer = new MzComparerWithBinning(27);
             const string protSequence =
@@ -460,7 +422,24 @@ namespace InformedProteomics.Test
             var proteinMass = neutral.Mass;
             var isoEnv = Averagine.GetIsotopomerEnvelope(proteinMass);
 
-            Console.WriteLine("Charge\t" + string.Join("\t", run.GetScanNumbers(1)));
+            const bool SHOW_ALL_SCANS = false;
+            var targetColIndex = 0;
+
+            if (SHOW_ALL_SCANS)           
+                Console.WriteLine("Charge\t" + string.Join("\t", run.GetScanNumbers(1)));
+            else
+            {
+                // Just display data for scan 161
+                Console.WriteLine("Charge\t161");
+                foreach (var scanNumber in run.GetScanNumbers(1))
+                {
+                    if (scanNumber == 161)
+                        break;
+                    targetColIndex++;
+                }
+
+            }
+
             const int minCharge = 2;
             const int maxCharge = 60;
             for (var charge = minCharge; charge <= maxCharge; charge++)
@@ -474,51 +453,15 @@ namespace InformedProteomics.Test
 
                 var xic = run.GetFullPrecursorIonExtractedIonChromatogram(mzStart, mzEnd);
                 Console.Write(charge+"\t");
-                Console.WriteLine(string.Join("\t", xic.Select(p => p.Intensity)));
+
+                
+                if (SHOW_ALL_SCANS)
+                    Console.WriteLine(string.Join("\t", xic.Select(p => p.Intensity)));
+                else
+                    Console.WriteLine(xic[targetColIndex].Intensity);
             }
         }
-
-        [Test]
-        public void TestGettingXicVector()
-        {
-            var methodName = MethodBase.GetCurrentMethod().Name;
-            TestUtils.ShowStarting(methodName);
-
-            if (!File.Exists(TestRawFilePath))
-            {
-                Console.WriteLine(@"Warning: Skipping test " + methodName + @" since file not found: " + TestRawFilePath);
-                return;
-            }
-
-            var run1 = PbfLcMsRun.GetLcMsRun(TestRawFilePath, 0.0, 0.0);
-            var run2 = InMemoryLcMsRun.GetLcMsRun(TestRawFilePath, 0.0, 0.0);
-            Assert.True(run1 != null && run2 != null);
-            var comparer = new MzComparerWithBinning(27);
-            const double minMz = 600.0; // 600.0
-            const double maxMz = 2000.0;    // 2000.0
-            var minBinNum = comparer.GetBinNumber(minMz);
-            var maxBinNum = comparer.GetBinNumber(maxMz);
-            Console.WriteLine("NumBins: " + (maxBinNum - minBinNum));
-            var sw = new Stopwatch();
-            sw.Start();
-            for (var binNum = minBinNum; binNum <= maxBinNum; binNum++)
-            {
-                var mzStart = comparer.GetMzStart(binNum);
-                var mzEnd = comparer.GetMzEnd(binNum);
-                var vec1 = run1.GetFullPrecursorIonExtractedIonChromatogramVector(mzStart, mzEnd);
-                var vec2 = run2.GetFullPrecursorIonExtractedIonChromatogramVector(mzStart, mzEnd);
-                Assert.True(vec1.Length == vec2.Length);
-                for (var i = 0; i < vec1.Length; i++)
-                {
-                    Assert.True(vec1[i] == vec2[i]);
-                }
-            }
-            sw.Stop();
-            var sec = sw.ElapsedTicks / (double)Stopwatch.Frequency;
-            Console.WriteLine(@"{0:f4} sec", sec);
-            
-        }
-
+      
         [Test]
         public void TestAbpSumMs1Spectra()
         {
@@ -535,6 +478,7 @@ namespace InformedProteomics.Test
 
             const int minScanNum = 5657;
             const int maxScanNum = 5699;
+            const int MAX_POINTS = 50;
 
             var run = PbfLcMsRun.GetLcMsRun(specFilePath);
             if (run == null) return;
@@ -542,7 +486,7 @@ namespace InformedProteomics.Test
             var peakList = summedSpec.GetPeakListWithin(1180.0, 1192.0);
             var filteredPeakList = new List<Peak>();
             PeakListUtils.FilterNoise(peakList, ref filteredPeakList);
-            new Spectrum(filteredPeakList, 0).Display();
+            new Spectrum(filteredPeakList, 0).Display(MAX_POINTS);
         }
 
         [Test]

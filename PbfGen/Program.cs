@@ -68,16 +68,23 @@ namespace PbfGen
                     return -1;
                 }
 
-                if (!File.Exists(specFilePath) && !Directory.Exists(specFilePath))
+                // Check for folder-type datasets, and replace specFilePath with the directory name if it is.
+                specFilePath = MassSpecDataReaderFactory.GetDatasetName(specFilePath);
+
+                var isDirectoryDataset = MassSpecDataReaderFactory.IsADirectoryDataset(specFilePath);
+                // True if specFilePath is a directory that is NOT a supported folder-type dataset.
+                var specPathIsDirectory = Directory.Exists(specFilePath) && !isDirectoryDataset;
+
+                if (!File.Exists(specFilePath) && !specPathIsDirectory && !isDirectoryDataset)
                 {
                     PrintUsageInfo("File not found: " + specFilePath);
                     return -1;
                 }
 
-                var types = MassSpecDataReaderFactory.GetMassSpecDataTypeFilterList();
+                var types = MassSpecDataReaderFactory.MassSpecDataTypeFilterList;
                 types.Remove(".pbf");
 
-                if (!Directory.Exists(specFilePath) && !(types.Select(ext => specFilePath.ToLower().EndsWith(ext)).Any()))
+                if (!specPathIsDirectory && !(types.Select(ext => specFilePath.ToLower().EndsWith(ext)).Any()))
                 {
                     PrintUsageInfo("Invalid file extension: (" + Path.GetExtension(specFilePath) + ") " + specFilePath);
                     return -1;
@@ -85,14 +92,13 @@ namespace PbfGen
 
                 // Must use "Path.GetFullPath" to return the absolute path when the source file is in the working directory
                 // But, it could cause problems with too-long paths.
-                outputDir = paramDic["-o"] ?? (Directory.Exists(specFilePath) ? specFilePath : Path.GetDirectoryName(Path.GetFullPath(specFilePath)));
+                outputDir = paramDic["-o"] ?? (specPathIsDirectory ? specFilePath : Path.GetDirectoryName(Path.GetFullPath(specFilePath)));
                 if (outputDir == null)
                 {
-                    PrintUsageInfo("Invalid raw file directory: " + specFilePath);
+                    PrintUsageInfo("Invalid output file directory: " + specFilePath);
                     return -1;
                 }
-
-                if (outputDir[outputDir.Length - 1] == Path.DirectorySeparatorChar) outputDir = outputDir.Remove(outputDir.Length - 1);
+                
                 if (!Directory.Exists(outputDir))
                 {
                     if (File.Exists(outputDir) && !File.GetAttributes(outputDir).HasFlag(FileAttributes.Directory))
@@ -114,35 +120,37 @@ namespace PbfGen
             try
             {
 #endif
-                var specFilePaths = Directory.Exists(specFilePath) ? Directory.GetFiles(specFilePath, "*.raw") : new[] { specFilePath };
+                string[] specFilePaths = new[] { specFilePath };
+                if (Directory.Exists(specFilePath) && !MassSpecDataReaderFactory.IsADirectoryDataset(specFilePath))
+                {
+                    specFilePaths = Directory.GetFiles(specFilePath, "*.raw");
+                }
 
                 foreach (var rawFilePath in specFilePaths)
                 {
-                    var pbfFilePath = outputDir + Path.DirectorySeparatorChar +
-                                               Path.GetFileNameWithoutExtension(rawFilePath) + PbfLcMsRun.FileExtension;
+                    var pbfFilePath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(rawFilePath) + PbfLcMsRun.FileExtension);
 
                     if (File.Exists(pbfFilePath) && PbfLcMsRun.CheckFileFormatVersion(pbfFilePath))
                     {
                         Console.WriteLine("{0} already exists.", pbfFilePath);
+                        continue;
                     }
-                    else
+
+                    Console.WriteLine("Creating {0} from {1}", pbfFilePath, rawFilePath);
+                    IMassSpecDataReader reader = MassSpecDataReaderFactory.GetMassSpecDataReader(rawFilePath);
+                    var progress = new Progress<ProgressData>(p =>
                     {
-                        Console.WriteLine("Creating {0} from {1}", pbfFilePath, rawFilePath);
-                        IMassSpecDataReader reader = MassSpecDataReaderFactory.GetMassSpecDataReader(rawFilePath);
-                        var progress = new Progress<ProgressData>(p =>
+                        p.UpdateFrequencySeconds = 2;
+                        if ((p.Percent % 25).Equals(0) || p.ShouldUpdate())
                         {
-                            p.UpdateFrequencySeconds = 2;
-                            if ((p.Percent % 25).Equals(0) || p.ShouldUpdate())
-                            {
-                                Console.Write("\r{0}, {1:00.0}% complete                        ", p.Status, p.Percent);
-                            }
-                        });
-                        //var run = new InMemoryLcMsRun(reader, 0, 0, progress);
-                        //Console.WriteLine();
-                        //run.WriteAsPbf(rafFilePath, progress);
-                        InMemoryLcMsRun.ConvertToPbf(rawFilePath, reader, 0, 0, pbfFilePath, progress);
-                        Console.WriteLine();
-                    }
+                            Console.Write("\r{0}, {1:00.0}% complete                        ", p.Status, p.Percent);
+                        }
+                    });
+                    //var run = new InMemoryLcMsRun(reader, 0, 0, progress);
+                    //Console.WriteLine();
+                    //run.WriteAsPbf(rafFilePath, progress);
+                    InMemoryLcMsRun.ConvertToPbf(rawFilePath, reader, 0, 0, pbfFilePath, progress);
+                    Console.WriteLine();
                 }
 
 
