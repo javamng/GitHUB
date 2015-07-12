@@ -151,6 +151,8 @@ namespace InformedProteomics.Backend.MassSpecData
                 _maxMs1Mz = _reader.ReadDouble();
             }
 
+            NumSpectra = _scanNumToSpecOffset.Count;
+
             CreatePrecursorNextScanMap();
         }
 
@@ -164,29 +166,24 @@ namespace InformedProteomics.Backend.MassSpecData
             get { return _maxMs1Mz; }
         }
 
-        public override Spectrum GetSpectrum(int scanNum)
+        public override Spectrum GetSpectrum(int scanNum, bool includePeaks = true)
         {
             long offset;
             if (!_scanNumToSpecOffset.TryGetValue(scanNum, out offset)) return null;
-            var spec = ReadSpectrum(offset);
+            var spec = ReadSpectrum(offset, includePeaks);
             if (spec.MsLevel == 1 && _precursorSignalToNoiseRatioThreshold > 0.0) spec.FilterNoise(_precursorSignalToNoiseRatioThreshold);
             else if (_productSignalToNoiseRatioThreshold > 0.0) spec.FilterNoise(_productSignalToNoiseRatioThreshold);
             return spec;
         }
 
-        public Spectrum ReadMassSpectrum(int scanNum)
+        public Spectrum ReadMassSpectrum(int scanNum, bool includePeaks = true)
         {
-            return GetSpectrum(scanNum);
+            return GetSpectrum(scanNum, includePeaks);
         }
 
         public bool TryMakeRandomAccessCapable()
         {
             return true;
-        }
-
-        public new int NumSpectra
-        {
-            get { return _scanNumToSpecOffset.Count; }
         }
 
         public override IsolationWindow GetIsolationWindow(int scanNum)
@@ -438,14 +435,14 @@ namespace InformedProteomics.Backend.MassSpecData
             }
         }
 
-        private Spectrum ReadSpectrum(long offset)
+        private Spectrum ReadSpectrum(long offset, bool includePeaks = true)
         {
             lock(_fileLock)
             {
                 _reader.BaseStream.Seek(offset, SeekOrigin.Begin);
                 while (_reader.BaseStream.Position != (_reader.BaseStream.Length - sizeof (int)))
                 {
-                    var spec = ReadSpectrum(_reader);
+                    var spec = ReadSpectrum(_reader, includePeaks);
                     return spec;
                 }
                 return null;
@@ -487,11 +484,16 @@ namespace InformedProteomics.Backend.MassSpecData
                 isolationWindowUpperOffset, precursorMass, precursorCharge);
         }
 
-        private static Spectrum ReadSpectrum(BinaryReader reader)
+        private static Spectrum ReadSpectrum(BinaryReader reader, bool includePeaks = true)
         {
             var scanNum = reader.ReadInt32();
             var msLevel = reader.ReadByte();
             var elutionTime = reader.ReadDouble();
+            List<Peak> peakList = new List<Peak>();
+            if (includePeaks)
+            {
+                peakList = ReadPeakList(reader);
+            }
 
             if (msLevel > 1)
             {
@@ -503,7 +505,6 @@ namespace InformedProteomics.Backend.MassSpecData
                 var isolationWindowTargetMz = reader.ReadDouble();
                 var isolationWindowLowerOffset = reader.ReadDouble();
                 var isolationWindowUpperOffset = reader.ReadDouble();
-                var peakList = ReadPeakList(reader);
                 return new ProductSpectrum(peakList, scanNum)
                 {
                     MsLevel = msLevel,
@@ -520,7 +521,6 @@ namespace InformedProteomics.Backend.MassSpecData
             }
             else
             {
-                var peakList = ReadPeakList(reader);
                 return new Spectrum(peakList, scanNum)
                 {
                     ElutionTime = elutionTime
