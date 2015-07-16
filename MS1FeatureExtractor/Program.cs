@@ -59,7 +59,7 @@ namespace ProMex
                     {"-score", "n"},
                     {"-csv", "n"},
                     {"-tmp", "n"},
-                    //{"-quant", "n"},
+                    {"-scoreTh", "0"},
                     {"-maxThreads", "0"},
                 };
 
