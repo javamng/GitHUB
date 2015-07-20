@@ -55,7 +55,7 @@ namespace InformedProteomics.Test
 
             Console.Write("NumCompositions: {0}", compScanTable.Keys.Count);
 
-            const string featureFilePath = @"H:\Research\QCShew_TopDown\Production\M1_V4_JP_Len500\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcTda.tsv";
+            //const string featureFilePath = @"H:\Research\QCShew_TopDown\Production\M1_V4_JP_Len500\QC_Shew_Intact_26Sep14_Bane_C2Column3_IcTda.tsv";
 
         }
 
@@ -456,7 +456,7 @@ namespace InformedProteomics.Test
 
             //const int minPrecursorCharge = 3;
             //const int maxPrecursorCharge = 30;
-            const int tolerancePpm = 15;
+            //const int tolerancePpm = 15;
             var tolerance = new Tolerance(15);
 
             //var ms1BasedFilter = new Ms1IsotopeCorrFilter(run, minPrecursorCharge, maxPrecursorCharge, tolerancePpm, 0.7, 40);
@@ -550,10 +550,10 @@ namespace InformedProteomics.Test
 
             var run = InMemoryLcMsRun.GetLcMsRun(rawFilePath, 1.4826, 1.4826);
 
-            const int minPrecursorIonCharge = 3; // 3
-            const int maxPrecursorIonCharge = 30;// 67
-            const int minProductIonCharge = 1;
-            const int maxProductIonCharge = 10;
+            //const int minPrecursorIonCharge = 3; // 3
+            //const int maxPrecursorIonCharge = 30;// 67
+            //const int minProductIonCharge = 1;
+            //const int maxProductIonCharge = 10;
 
             var sw = new System.Diagnostics.Stopwatch();
             sw.Start();
@@ -616,7 +616,7 @@ namespace InformedProteomics.Test
 
             var sw = new System.Diagnostics.Stopwatch();
 
-//            const string dbFile = @"\\protoapps\UserData\Sangtae\TestData\H_sapiens_Uniprot_SPROT_2013-05-01_withContam.fasta";
+//            const string dbFile = @"\\proto-2\UnitTest_Files\InformedProteomics_TestFiles\H_sapiens_Uniprot_SPROT_2013-05-01_withContam.fasta";
             const string dbFile = @"C:\cygwin\home\kims336\Data\TopDownJia\database\ID_003962_71E1A1D4.fasta";
 
             //const string dbFile = @"C:\cygwin\home\kims336\Data\TopDownJia\database\TargetProteins.fasta";
