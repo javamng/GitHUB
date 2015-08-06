@@ -11,6 +11,12 @@ namespace InformedProteomics.TopDown.Execution
 {
     public class Ms1FeatureFinderLauncher
     {
+        private LcMsFeatureLikelihood _likelihoodScorer;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="parameters"></param>
         public Ms1FeatureFinderLauncher(Ms1FeatureFinderInputParameter parameters = null)
         {
             Parameters = parameters ?? new Ms1FeatureFinderInputParameter();
@@ -25,7 +31,7 @@ namespace InformedProteomics.TopDown.Execution
             }
             catch (FileNotFoundException fe)
             {
-                Console.WriteLine(fe.Message);
+                ShowErrorMessage(fe.Message);
                 return;
             }
 
@@ -43,7 +49,7 @@ namespace InformedProteomics.TopDown.Execution
             {
                 if (!MsRawFile(Parameters.InputPath) && !MsPbfFile(Parameters.InputPath))
                 {
-                    Console.WriteLine(@"Not supported file extension");
+                    ShowErrorMessage(@"File extension not supported, " + Parameters.InputPath);
                 }
                 else
                 {
@@ -121,7 +127,7 @@ namespace InformedProteomics.TopDown.Execution
 
             if (!File.Exists(rawFile))
             {
-                Console.WriteLine(@"Cannot find input file: {0}", rawFile);
+                ShowErrorMessage(@"Cannot find input file: "+ rawFile);
                 return;
             }
 
@@ -131,6 +137,12 @@ namespace InformedProteomics.TopDown.Execution
 
             var featureFinder = new LcMsPeakMatrix(run, _likelihoodScorer);
             Console.WriteLine(@"Complete loading MS1 data. Elapsed Time = {0:0.000} sec", (stopwatch.ElapsedMilliseconds)/1000.0d);
+
+            if (run.GetMs1ScanVector().Length == 0)
+            {
+                ShowErrorMessage(@"Data file has no MS1 spectra: " + Path.GetFileName(rawFile));
+                return;
+            }
 
             var container = new LcMsFeatureContainer(featureFinder.Ms1Spectra, _likelihoodScorer);
             var comparer = featureFinder.Comparer;
@@ -285,8 +297,13 @@ namespace InformedProteomics.TopDown.Execution
             return sb.ToString();
         }
 
-        private LcMsFeatureLikelihood _likelihoodScorer;
+        private void ShowErrorMessage(string errorMessage)
+        {
+            Console.WriteLine(@"----------------------------------------------------------");
+            Console.WriteLine(@"Error: " + errorMessage);
+            Console.WriteLine(@"----------------------------------------------------------");
 
+        }
         private static readonly string[] TsvHeader = new string[]
         {
             "FeatureID", "MinScan", "MaxScan", "MinCharge", "MaxCharge", 
