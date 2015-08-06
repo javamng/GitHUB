@@ -69,8 +69,7 @@ namespace InformedProteomics.TopDown.Scoring
 
         public Spectrum GetDeconvolutedSpectrum(Spectrum spec, int minCharge, int maxCharge, Tolerance tolerance, double corrThreshold)
         {
-            return GetDeconvolutedSpectrum(spec, minCharge, maxCharge, tolerance, corrThreshold, IsotopeOffsetTolerance,
-                FilteringWindowSize);
+            return GetDeconvolutedSpectrum(spec, minCharge, maxCharge, tolerance, corrThreshold, IsotopeOffsetTolerance, FilteringWindowSize);
         }
 
         public static Spectrum GetDeconvolutedSpectrum(Spectrum spec, int minCharge, int maxCharge, Tolerance tolerance, double corrThreshold,
@@ -101,9 +100,11 @@ namespace InformedProteomics.TopDown.Scoring
             return new Spectrum(peakList, spec.ScanNum);
         }
 
+        /*
+         * Scorign based on deconvoluted spectrum
+         */
         internal class DeconvScorer : IScorer
         {
-            //private readonly BaseIonType[] _baseIonTypes;
             private readonly double _prefixOffsetMass;
             private readonly double _suffixOffsetMass;
             private readonly HashSet<int> _ionMassBins;
@@ -185,6 +186,5 @@ namespace InformedProteomics.TopDown.Scoring
         private const double RescalingConstantHighPrecision = Constants.RescalingConstantHighPrecision;
         private const double CorrScoreThresholdMs2 = 0.7;
         //private static readonly MzComparerWithBinning Comparer = new MzComparerWithBinning(29); // max error: 4ppm
-
     }
 }
