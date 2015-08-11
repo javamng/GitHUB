@@ -1503,7 +1503,6 @@ namespace InformedProteomics.Backend.MassSpecData
                     }
                 }
             }
-            }
 
             GC.Collect(); // We just killed a large number of objects when the list of peaks went out of scope.
         }
