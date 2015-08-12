@@ -254,7 +254,18 @@ namespace InformedProteomics.Backend.MassSpecData
         /// <returns></returns>
         public static Assembly ProteoWizardAssemblyResolver(object sender, ResolveEventArgs args)
         {
+#if DEBUG
+            Console.WriteLine("Looking for: " + args.Name);
+            //Console.WriteLine("Wanted by: " + args.RequestingAssembly);
+#endif
+            if (!args.Name.ToLower().StartsWith("pwiz_bindings_cli"))
+            {
+                return Assembly.LoadFrom(""); // We are not interested in searching for anything else - resolving pwiz_bindings_cli provides the hint for all of its dependencies.
+                // This will actually trigger an exception, which is handled in the system code, and the dll search goes on down the chain.
+                // returning null results in this code being called multiple times, for the same dependency.
+            }
             Console.WriteLine("Searching for ProteoWizard files...");
+
             // https://support.microsoft.com/en-us/kb/837908
             //This handler is called only when the common language runtime tries to bind to the assembly and fails.
             if (string.IsNullOrWhiteSpace(PwizPath))
@@ -279,7 +290,9 @@ namespace InformedProteomics.Backend.MassSpecData
                     break;
                 }
             }
-            Console.WriteLine("Loading file \"" + strTempAssmbPath + "\"");
+#if DEBUG
+                Console.WriteLine("Loading file \"" + strTempAssmbPath + "\"");
+#endif
             //Load the assembly from the specified path.  
             Assembly myAssembly = null;
             try
@@ -457,6 +470,7 @@ namespace InformedProteomics.Backend.MassSpecData
             var pwizSpec = _dataFile.run.spectrumList.spectrum(scanIndex - 1, includePeaks);
 
             var msLevel = (int)(pwizSpec.cvParam(CVID.MS_ms_level).value);
+            var tic = (double)(pwizSpec.cvParam(CVID.MS_total_ion_current).value);
             double[] mzArray = new double[0];
             double[] intensityArray = new double[0];
             foreach (var bda in pwizSpec.binaryDataArrays)
@@ -537,6 +551,7 @@ namespace InformedProteomics.Backend.MassSpecData
                 return new ProductSpectrum(mzArray, intensityArray, scanIndex)
                 {
                     NativeId = pwizSpec.id,
+                    TotalIonCurrent = tic,
                     ActivationMethod = am,
                     IsolationWindow = iw,
                     MsLevel = msLevel,
@@ -546,7 +561,9 @@ namespace InformedProteomics.Backend.MassSpecData
             return new Spectrum(mzArray, intensityArray, scanIndex)
             {
                 NativeId = pwizSpec.id,
+                TotalIonCurrent = tic,
                 ElutionTime = scanTime,
+                MsLevel = msLevel,
             };
         }
 

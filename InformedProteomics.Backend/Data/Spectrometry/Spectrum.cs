@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using InformedProteomics.Backend.Data.Biology;
 using InformedProteomics.Backend.Data.Composition;
@@ -34,6 +33,8 @@ namespace InformedProteomics.Backend.Data.Spectrometry
         public int ScanNum { get; protected set; }
 
 		public string NativeId { get; set; }
+
+        public double TotalIonCurrent { get; set; }
 
         public int MsLevel
         {

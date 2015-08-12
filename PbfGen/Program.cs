@@ -130,7 +130,8 @@ namespace PbfGen
                 {
                     var pbfFilePath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(rawFilePath) + PbfLcMsRun.FileExtension);
 
-                    if (File.Exists(pbfFilePath) && PbfLcMsRun.CheckFileFormatVersion(pbfFilePath))
+                    bool isCurrent;
+                    if (File.Exists(pbfFilePath) && PbfLcMsRun.CheckFileFormatVersion(pbfFilePath, out isCurrent) && isCurrent)
                     {
                         Console.WriteLine("{0} already exists.", pbfFilePath);
                         continue;
@@ -146,11 +147,7 @@ namespace PbfGen
                             Console.Write("\r{0}, {1:00.0}% complete                        ", p.Status, p.Percent);
                         }
                     });
-                    //var run = new InMemoryLcMsRun(reader, 0, 0, progress);
-                    //Console.WriteLine();
-                    //run.WriteAsPbf(rafFilePath, progress);
-                    PbfLcMsRun.ConvertToPbf(rawFilePath, reader, 0, 0, pbfFilePath, progress);
-                    //PbfLcMsRun.WriteAsPbf(reader, pbfFilePath, progress);
+                    var run = new PbfLcMsRun(rawFilePath, null, pbfFilePath, 0, 0, progress);
                     Console.WriteLine();
                 }
 
