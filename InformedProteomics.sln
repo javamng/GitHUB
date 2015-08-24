@@ -43,6 +43,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelectivityScore", "SelectivityScore\SelectivityScore.csproj", "{19658C05-EF09-404D-959F-EF9A6029013B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EC48BC6F-130E-4BFB-B481-D3EADC35FD14}"
+	ProjectSection(SolutionItems) = preProject
+		Performance2.psess = Performance2.psess
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InformedProteomics.Graphics", "InformedProteomics.Graphics\InformedProteomics.Graphics.csproj", "{24FE608E-3B0C-4A6B-84EF-CAFE09B9E366}"
 EndProject
@@ -257,5 +260,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

@@ -200,7 +200,7 @@ namespace MSPathFinderT
                 ForceParallel = true;
                 MaxNumThreads = -MaxNumThreads;
             }
-            
+
             return null;
         }
 

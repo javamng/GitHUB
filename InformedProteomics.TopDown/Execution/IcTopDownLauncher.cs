@@ -222,7 +222,7 @@ namespace InformedProteomics.TopDown.Execution
             progData.Status = "Reading Fasta File";
             progress.Report(progData.UpdatePercent(100.0)); // Output 25.0%
 
-
+            
             // Generate sequence tags for all MS/MS spectra
             sw.Reset();
             Console.WriteLine(@"Generating sequence tags for MS/MS spectra...");
@@ -231,7 +231,7 @@ namespace InformedProteomics.TopDown.Execution
             _tagMs2ScanNum = seqTagGen.GetMs2ScanNumsContainingTags().ToArray();
             sw.Stop();
             Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
-
+            
             // Target database
             var targetDb = new FastaDatabase(DatabaseFilePath);
             targetDb.Read();
@@ -262,13 +262,13 @@ namespace InformedProteomics.TopDown.Execution
                 Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
 
                 var targetMatches = new SortedSet<DatabaseSequenceSpectrumMatch>[_run.MaxLcScan + 1];
-
+                
                 sw.Reset();
                 Console.WriteLine(@"Tag-based searching the target database");
                 sw.Start();
                 RunTagBasedSearch(targetMatches, targetDb, null, prog);
                 Console.WriteLine(@"Target database tag-baesd search elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
-                
+
                 sw.Reset();
                 Console.WriteLine(@"Searching the target database");
                 sw.Start();
@@ -411,13 +411,13 @@ namespace InformedProteomics.TopDown.Execution
             {
                 var pfeOptions = new ParallelOptions();
                 pfeOptions.MaxDegreeOfParallelism = GetMaxThreads();
+
                 pfeOptions.CancellationToken = cancellationToken != null
                     ? cancellationToken.Value
                     : CancellationToken.None;
 
                 Parallel.ForEach(_tagMs2ScanNum, pfeOptions, ms2ScanNum =>
                 {
-                    
                     var tagSeqMatches = _tagSearchEngine.RunSearch(ms2ScanNum);
                     var spec = _run.GetSpectrum(ms2ScanNum) as ProductSpectrum;
                     var prsmList = new List<DatabaseSequenceSpectrumMatch>();
@@ -433,7 +433,6 @@ namespace InformedProteomics.TopDown.Execution
 
                         var seqObj = Sequence.CreateSequence(sequence, tagSequenceMatch.TagMatch.Modifications, AminoAcidSet);
                         var precursorIon = new Ion(seqObj.Composition + Composition.H2O, charge);
-                        //var precursorIon = new Ion(new CompositionWithDeltaMass(sequenceMass), charge);
                         var prsm = new DatabaseSequenceSpectrumMatch(sequence, tagSequenceMatch.Pre, tagSequenceMatch.Post,
                             ms2ScanNum, (long)offset, numNTermCleavages,
                             null,

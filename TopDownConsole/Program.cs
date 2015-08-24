@@ -27,6 +27,23 @@ namespace MSPathFinderT
 
         public static int Main(string[] args)
         {
+            /*
+            args = new string[14];
+            args[0] = "-d";
+            args[1] = @"\\protoapps\UserData\Jungkap\Lewy\db\ID_004207_B4D4E562.fasta";
+            args[2] = "-o";
+            args[3] = @"\\protoapps\UserData\Jungkap\Lewy\MSPF2";
+            args[4] = "-m";
+            args[5] = "1";
+            args[6] = "-mod"
+            args[7] = @"\\protoapps\UserData\Jungkap\Lewy\db\Mods.txt";
+            args[8] = "-tda";
+            args[9] = "1";
+            args[10] = "-feature";
+            args[11] = @"\\protoapps\UserData\Jungkap\Lewy\ms1ft\Lewy_intact_02.ms1ft";
+            args[12] = "-s";
+            args[13] = @"\\proto-11\MSXML_Cache\PBF_Gen_1_193\2014_3\Lewy_intact_02.pbf";
+            */
 
             var errorCode = 0;
 
@@ -72,6 +89,7 @@ namespace MSPathFinderT
                     {"-feature", null},
                     {"-threads", "0"},
                 };
+
 
             for (var i = 0; i < args.Length / 2; i++)
             {
