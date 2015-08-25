@@ -394,8 +394,11 @@ namespace InformedProteomics.TopDown.Execution
 
             _tagSearchEngine.SetDatabase(db);
             //var ms2ScanNums = _run.GetScanNumbers(2);
-            var progData = new ProgressData();
-            progData.Status = "Tag-based Searching for matches";
+            var progData = new ProgressData
+            {
+                Status = "Tag-based Searching for matches"
+            };
+
             var sw = new Stopwatch();
 
             long estimatedProteins = _tagMs2ScanNum.Length;
@@ -409,11 +412,11 @@ namespace InformedProteomics.TopDown.Execution
 
             if (parallel)
             {
-                var pfeOptions = new ParallelOptions();
-                pfeOptions.MaxDegreeOfParallelism = GetMaxThreads();
-                pfeOptions.CancellationToken = cancellationToken != null
-                    ? cancellationToken.Value
-                    : CancellationToken.None;
+                var pfeOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = GetMaxThreads(),
+                    CancellationToken = cancellationToken ?? CancellationToken.None
+                };
 
                 Parallel.ForEach(_tagMs2ScanNum, pfeOptions, ms2ScanNum =>
                 {
@@ -421,10 +424,18 @@ namespace InformedProteomics.TopDown.Execution
                     var tagSeqMatches = _tagSearchEngine.RunSearch(ms2ScanNum);
                     var spec = _run.GetSpectrum(ms2ScanNum) as ProductSpectrum;
                     var prsmList = new List<DatabaseSequenceSpectrumMatch>();
+
                     foreach (var tagSequenceMatch in tagSeqMatches)
                     {
+
+                        if (spec == null)
+                        {
+                            break;
+                        }
+
                         var offset = _tagSearchEngine.DB.GetOffset(tagSequenceMatch.ProteinName);
                         if (offset == null) continue;
+
                         var sequence = tagSequenceMatch.Sequence;
                         var numNTermCleavages = tagSequenceMatch.TagMatch.StartIndex;
                         var sequenceMass = tagSequenceMatch.TagMatch.Mass;
@@ -435,9 +446,9 @@ namespace InformedProteomics.TopDown.Execution
                         var precursorIon = new Ion(seqObj.Composition + Composition.H2O, charge);
                         //var precursorIon = new Ion(new CompositionWithDeltaMass(sequenceMass), charge);
                         var prsm = new DatabaseSequenceSpectrumMatch(sequence, tagSequenceMatch.Pre, tagSequenceMatch.Post,
-                            ms2ScanNum, (long)offset, numNTermCleavages,
-                            null,
-                            precursorIon, tagSequenceMatch.TagMatch.Score)
+                                                                     ms2ScanNum, (long)offset, numNTermCleavages,
+                                                                     null,
+                                                                     precursorIon, tagSequenceMatch.TagMatch.Score)
                         {
                             ModificationText = tagSequenceMatch.TagMatch.Modifications,
                         };
@@ -542,8 +553,11 @@ namespace InformedProteomics.TopDown.Execution
             {
                 progress = new Progress<ProgressData>();
             }
-            var progData = new ProgressData();
-            progData.Status = "Searching for matches";
+            var progData = new ProgressData
+            {
+                Status = "Searching for matches"
+            };
+
             var sw = new Stopwatch();
             long estimatedProteins;
             var annotationsAndOffsets = GetAnnotationsAndOffsets(db, out estimatedProteins, cancellationToken);
@@ -561,9 +575,11 @@ namespace InformedProteomics.TopDown.Execution
 
             if (ForceParallel || (SearchMode == 0 && MaxNumThreads != 1))
             {
-                var pfeOptions = new ParallelOptions();
-                pfeOptions.MaxDegreeOfParallelism = GetMaxThreads();
-                pfeOptions.CancellationToken = cancellationToken != null ? cancellationToken.Value : CancellationToken.None;
+                var pfeOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = GetMaxThreads(),
+                    CancellationToken = cancellationToken ?? CancellationToken.None
+                };
 
                 Parallel.ForEach(annotationsAndOffsets, pfeOptions, annotationAndOffset =>
                 {
@@ -644,6 +660,7 @@ namespace InformedProteomics.TopDown.Execution
 
             var seqGraph = SequenceGraph.CreateGraph(AminoAcidSet, AminoAcid.ProteinNTerm, protSequence,
                 AminoAcid.ProteinCTerm);
+
             if (seqGraph == null) return; // No matches will be found without a sequence graph.
 
             for (var numNTermCleavages = 0; numNTermCleavages <= maxNumNTermCleavages; numNTermCleavages++)
@@ -732,10 +749,12 @@ namespace InformedProteomics.TopDown.Execution
             {
                 progress = new Progress<ProgressData>();
             }
-            var progData = new ProgressData();
-            progData.Status = "Generating sequence tags";
+            var progData = new ProgressData
+            {
+                Status = "Generating sequence tags"
+            };
+
             var sw = new Stopwatch();
-            var parallel = true;
 
             // Rescore and Estimate #proteins for GF calculation
             long estimatedProteins = scanNums.Count;
@@ -745,20 +764,18 @@ namespace InformedProteomics.TopDown.Execution
             sw.Reset();
             sw.Start();
 
-            if (parallel)
+            var pfeOptions = new ParallelOptions
             {
-                var pfeOptions = new ParallelOptions();
-                pfeOptions.MaxDegreeOfParallelism = GetMaxThreads();
-                pfeOptions.CancellationToken = cancellationToken != null
-                    ? cancellationToken.Value
-                    : CancellationToken.None;
+                MaxDegreeOfParallelism = GetMaxThreads(),
+                CancellationToken = cancellationToken ?? CancellationToken.None
+            };
 
-                Parallel.ForEach(scanNums, pfeOptions, scanNum =>
-                {
-                    sequenceTagGen.Generate(scanNum);
-                    SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData, "spectra");
-                });
-            }
+            Parallel.ForEach(scanNums, pfeOptions, scanNum =>
+            {
+                sequenceTagGen.Generate(scanNum);
+                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData,
+                                     "spectra");
+            });
 
             progData.StatusInternal = string.Empty;
             progress.Report(progData.UpdatePercent(100.0));
@@ -773,8 +790,11 @@ namespace InformedProteomics.TopDown.Execution
             {
                 progress = new Progress<ProgressData>();
             }
-            var progData = new ProgressData();
-            progData.Status = "Calculating spectral E-values for matches";
+            var progData = new ProgressData
+            {
+                Status = "Calculating spectral E-values for matches"
+            };
+
             var sw = new Stopwatch();
 
             // Rescore and Estimate #proteins for GF calculation
@@ -816,9 +836,11 @@ namespace InformedProteomics.TopDown.Execution
             //if (ForceParallel || (SearchMode == 0 && MaxNumThreads != 1))
             if (true)
             {
-                var pfeOptions = new ParallelOptions();
-                pfeOptions.MaxDegreeOfParallelism = GetMaxThreads();
-                pfeOptions.CancellationToken = cancellationToken != null ? cancellationToken.Value : CancellationToken.None;
+                var pfeOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = GetMaxThreads(),
+                    CancellationToken = cancellationToken ?? CancellationToken.None
+                };
 
                 Parallel.ForEach(scanNums, pfeOptions, scanNum =>
                 {
@@ -932,7 +954,7 @@ namespace InformedProteomics.TopDown.Execution
             catch (Exception)
             {
                 // Use the logical processor count, divided by 2 to avoid the greater performance penalty of over-threading.
-                coreCount = (int)(Math.Ceiling(System.Environment.ProcessorCount / 2.0));
+                coreCount = (int)(Math.Ceiling(Environment.ProcessorCount / 2.0));
             }
 
             if (threads <= 0 || threads > coreCount)
