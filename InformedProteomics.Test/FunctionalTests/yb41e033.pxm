@@ -82,8 +82,7 @@ namespace InformedProteomics.Test.FunctionalTests
             };
 
             //var comparer = new FilteredProteinMassBinning(aaSet, 50000, 28);
-            //var comparer = new ProteinMassBinning(50, 50000);
-            var comparer = new TestMassBin();
+            var comparer = new ProteinMassBinning(50, 50000);
             Console.WriteLine("{0}\t{1}",comparer.NumberOfBins, comparer.GetBinNumber(proteinMass));
             var graphFactory = new ProteinScoringGraphFactory(comparer, aaSet);
 
@@ -112,7 +111,7 @@ namespace InformedProteomics.Test.FunctionalTests
         {
             internal TestMassBin()
             {
-                MaxMass = 17000;
+                MaxMass = 50000;
                 MinMass = 0;
                 NumberOfBins = GetBinNumber(MaxMass) - GetBinNumber(MinMass) + 1;
                 Filtered = false;
@@ -126,7 +125,7 @@ namespace InformedProteomics.Test.FunctionalTests
             public double GetMass(int binNumber)
             {
                 //throw new NotImplementedException();
-                return binNumber/Constants.RescalingConstantHighPrecision;
+                return Constants.RescalingConstantHighPrecision*binNumber;
             }
 
             public double GetMassStart(int binNumber)
