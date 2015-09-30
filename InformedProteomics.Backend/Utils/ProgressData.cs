@@ -6,6 +6,7 @@ namespace InformedProteomics.Backend.Utils
     {
         public string Status { get; set; }
         public string StatusInternal { get; set; }
+        public IProgress<ProgressData> ProgressObj { get; set; }
 
         public double Percent
         {
@@ -17,9 +18,13 @@ namespace InformedProteomics.Backend.Utils
                 }
                 return _percent;
             }
-            set { _percent = value; }
+            private set { _percent = value; }
         }
 
+        /// <summary>
+        /// If the progress reporting will be blocked into ranges
+        /// Setting this to "true" will reset MinPercentage and MaxPercentage to 0.
+        /// </summary>
         public bool IsPartialRange { get; set; }
 
         /// <summary>
@@ -62,19 +67,40 @@ namespace InformedProteomics.Backend.Utils
         private double _minPercentage = 0;
         private double _maxPercentage = 100;
 
-        public ProgressData()
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="progress">The progress object that "ProgressData.Report" should call "Report" on</param>
+        public ProgressData(IProgress<ProgressData> progress = null)
         {
             LastUpdated = DateTime.MinValue;
             UpdateFrequencySeconds = 0.0001;
             IsPartialRange = false;
+            ProgressObj = progress;
+            if (progress == null)
+            {
+                ProgressObj = new Progress<ProgressData>();
+            }
         }
 
         /// <summary>
         /// Change to a new range block
         /// </summary>
         /// <param name="newMaxPercentage">New max percent for range, must be greater than current max percent.</param>
+        /// <remarks>Will set IsPartialRange to true</remarks>
+        /// <remarks>If current max percent is 100, the new max percent can be any value between 0 and 100</remarks>
         public void StepRange(double newMaxPercentage)
         {
+            if (!IsPartialRange)
+            {
+                IsPartialRange = true;
+
+                _minPercentage = 0;
+                if (_maxPercentage >= 100.0)
+                {
+                    _maxPercentage = 0;
+                }
+            }
             CheckSetMinMaxRange(_maxPercentage, newMaxPercentage);
         }
 
@@ -93,6 +119,9 @@ namespace InformedProteomics.Backend.Utils
             {
                 _maxPercentage = 100;
             }
+            
+            // Trigger an update, with the proper minimum value for the range
+            Report(0.0);
         }
 
         public ProgressData UpdatePercent(double pct)
@@ -113,6 +142,34 @@ namespace InformedProteomics.Backend.Utils
                 }
             }
             return update;
+        }
+
+        /// <summary>
+        /// Updates the percent, then calls the stored progress object's "Report"
+        /// </summary>
+        /// <param name="pct">percent progress, 0 to 100</param>
+        public void Report(double pct)
+        {
+            Percent = pct;
+            ProgressObj.Report(this);
+        }
+
+        /// <summary>
+        /// Updates the percent, then calls the stored progress object's "Report"
+        /// </summary>
+        /// <param name="pct">percent progress, 0 to 1</param>
+        public void ReportDecimal(double pct)
+        {
+            Report(pct * 100.0);
+        }
+        /// <summary>
+        /// Updates the percent, then calls the stored progress object's "Report"
+        /// </summary>
+        /// <param name="count">The count progress, or numerator</param>
+        /// <param name="total">The total number of objects to be counted, or denominator</param>
+        public void Report(double count, double total)
+        {
+            ReportDecimal(count / total);
         }
     }
 }

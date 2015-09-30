@@ -123,19 +123,15 @@ namespace InformedProteomics.TopDown.Execution
             SpecFilePath = MassSpecDataReaderFactory.NormalizeDatasetPath(SpecFilePath);
 
             var prog = new Progress<ProgressData>();
-            var progData = new ProgressData();
+            var progData = new ProgressData(progress);
             if (progress != null)
             {
                 prog = new Progress<ProgressData>(p =>
                 {
                     progData.Status = p.Status;
                     progData.StatusInternal = p.StatusInternal;
-                    progress.Report(progData.UpdatePercent(p.Percent));
+                    progData.Report(p.Percent);
                 });
-            }
-            else
-            {
-                progress = new Progress<ProgressData>();
             }
 
             var sw = new Stopwatch();
@@ -145,8 +141,7 @@ namespace InformedProteomics.TopDown.Execution
 
             Console.Write(@"Reading raw file...");
             progData.Status = "Reading spectra file";
-            progData.IsPartialRange = true;
-            progData.MaxPercentage = 10.0;
+            progData.StepRange(10.0);
             sw.Start();
 
             _run = PbfLcMsRun.GetLcMsRun(SpecFilePath, 0, 0, prog);
@@ -240,17 +235,19 @@ namespace InformedProteomics.TopDown.Execution
             sw.Stop();
             Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
 
-            progData.StepRange(25.0);
+            progData.StepRange(10.0);
             progData.Status = "Reading Fasta File";
-            progress.Report(progData.UpdatePercent(100.0)); // Output 25.0%
 
             // Target database
             var targetDb = new FastaDatabase(DatabaseFilePath);
             targetDb.Read();
             
             // Generate sequence tags for all MS/MS spectra
+
             if (SearchMode == 1)
             {
+                progData.StepRange(25.0);
+                progData.Status = "Generating Sequence Tags";
                 sw.Reset();
                 Console.WriteLine(@"Generating sequence tags for MS/MS spectra...");
                 sw.Start();
@@ -258,7 +255,6 @@ namespace InformedProteomics.TopDown.Execution
                 _tagMs2ScanNum = seqTagGen.GetMs2ScanNumsContainingTags().ToArray();
                 sw.Stop();
                 Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
-
                 _tagSearchEngine = new ScanBasedTagSearchEngine(_run, seqTagGen, new LcMsPeakMatrix(_run, ms1Filter), targetDb, ProductIonTolerance, AminoAcidSet,
                                 _ms2ScorerFactory2,
                                 ScanBasedTagSearchEngine.DefaultMinMatchedTagLength,
@@ -272,7 +268,6 @@ namespace InformedProteomics.TopDown.Execution
 
             progData.StepRange(60.0);
             progData.Status = "Running Target search";
-            progress.Report(progData.UpdatePercent(0.0));
 
             if (RunTargetDecoyAnalysis != null)
             {
@@ -284,7 +279,8 @@ namespace InformedProteomics.TopDown.Execution
                 Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
 
                 var targetMatches = new SortedSet<DatabaseSequenceSpectrumMatch>[_run.MaxLcScan + 1];
-
+                
+                progData.MaxPercentage = 42.5;
                 if (SearchMode == 1)
                 {
                     sw.Reset();
@@ -293,6 +289,7 @@ namespace InformedProteomics.TopDown.Execution
                     RunTagBasedSearch(targetMatches, targetDb, null, prog);
                     Console.WriteLine(@"Target database tag-based search elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
                 }
+                progData.MaxPercentage = 60.0;
 
                 sw.Reset();
                 Console.WriteLine(@"Searching the target database");
@@ -310,9 +307,8 @@ namespace InformedProteomics.TopDown.Execution
                 Console.WriteLine(@"Target-spectrum match E-value calculation elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
             }
 
-            progData.StepRange(95.0);
+            progData.StepRange(95.0); // total to 95%
             progData.Status = "Running Decoy search";
-            progress.Report(progData.UpdatePercent(0.0));
 
             if (RunTargetDecoyAnalysis == true || RunTargetDecoyAnalysis == null)
             {
@@ -325,6 +321,7 @@ namespace InformedProteomics.TopDown.Execution
                 decoyDb.Read();
                 Console.WriteLine(@"Elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);
 
+                progData.MaxPercentage = 77.5;
                 var decoyMatches = new SortedSet<DatabaseSequenceSpectrumMatch>[_run.MaxLcScan + 1];
                 if (SearchMode == 1)
                 {
@@ -334,6 +331,7 @@ namespace InformedProteomics.TopDown.Execution
                     RunTagBasedSearch(decoyMatches, decoyDb, null, prog);
                     Console.WriteLine(@"Decoy database tag-based search elapsed Time: {0:f1} sec", sw.Elapsed.TotalSeconds);                    
                 }
+                progData.MaxPercentage = 95.0;
 
                 sw.Reset();
                 Console.WriteLine(@"Searching the decoy database");
@@ -353,7 +351,6 @@ namespace InformedProteomics.TopDown.Execution
 
             progData.StepRange(100.0);
             progData.Status = "Writing combined results file";
-            progress.Report(progData.UpdatePercent(0.0));
             if (RunTargetDecoyAnalysis == true)
             {
                 // Add "Qvalue" and "PepQValue"
@@ -367,7 +364,7 @@ namespace InformedProteomics.TopDown.Execution
 
                 fdrCalculator.WriteTo(tdaOutputFilePath);
             }
-            progress.Report(progData.UpdatePercent(100.0));
+            progData.Report(100.0);
 
             Console.WriteLine(@"Done.");
             swAll.Stop();
@@ -407,14 +404,10 @@ namespace InformedProteomics.TopDown.Execution
         private void RunTagBasedSearch(SortedSet<DatabaseSequenceSpectrumMatch>[] matches, FastaDatabase db,
                                         CancellationToken? cancellationToken = null, IProgress<ProgressData> progress = null)
         {
-            if (progress == null)
-            {
-                progress = new Progress<ProgressData>();
-            }
-
             _tagSearchEngine.SetDatabase(db);
 
-            var progData = new ProgressData
+            //var ms2ScanNums = _run.GetScanNumbers(2);
+            var progData = new ProgressData(progress)
             {
                 Status = "Tag-based Searching for matches"
             };
@@ -461,22 +454,18 @@ namespace InformedProteomics.TopDown.Execution
                     AddMatch(matches, ms2ScanNum, prsm);    
                 }
                 
-                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData, "spectra");
+                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progData, "spectra");
             });
 
             Console.WriteLine(@"Collected candidate matches: {0}", GetNumberOfMatches(matches));
 
             progData.StatusInternal = string.Empty;
-            progress.Report(progData.UpdatePercent(100.0));
+            progData.Report(100.0);
         }
 
         private void RunSearch(SortedSet<DatabaseSequenceSpectrumMatch>[] matches, FastaDatabase db, ISequenceFilter sequenceFilter, CancellationToken? cancellationToken = null, IProgress<ProgressData> progress = null)
         {
-            if (progress == null)
-            {
-                progress = new Progress<ProgressData>();
-            }
-            var progData = new ProgressData
+            var progData = new ProgressData(progress)
             {
                 Status = "Searching for matches"
             };
@@ -506,17 +495,18 @@ namespace InformedProteomics.TopDown.Execution
                     //return matches;
                     return;
                 }
-                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData);
+
+                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progData);
                 SearchForMatches(annotationAndOffset, sequenceFilter, matches, maxNumNTermCleavages, db.IsDecoy, cancellationToken);
             });
 
             Console.WriteLine(@"Collected candidate matches: {0}", GetNumberOfMatches(matches));
 
             progData.StatusInternal = string.Empty;
-            progress.Report(progData.UpdatePercent(100.0));
+            progData.Report(100.0);
         }
 
-        private void SearchProgressReport(ref int numProteins, ref DateTime lastUpdate, long estimatedProteins, Stopwatch sw, IProgress<ProgressData> progress, ProgressData progData, string itemName = "proteins")
+        private void SearchProgressReport(ref int numProteins, ref DateTime lastUpdate, long estimatedProteins, Stopwatch sw, ProgressData progData, string itemName = "proteins")
         {
             var tempNumProteins = Interlocked.Increment(ref numProteins) - 1;
 
@@ -528,7 +518,7 @@ namespace InformedProteomics.TopDown.Execution
                     itemName,
                     tempNumProteins / (double)estimatedProteins * 100.0,
                     sw.Elapsed.TotalSeconds);
-            progress.Report(progData.UpdatePercent(tempNumProteins / (double)estimatedProteins * 100.0));
+            progData.Report(tempNumProteins, estimatedProteins);
 
             int secondsThreshold;
 
@@ -644,11 +634,7 @@ namespace InformedProteomics.TopDown.Execution
             var sequenceTagGen = new SequenceTagGenerator(_run, new Tolerance(5));
             var scanNums = _ms2ScanNums;
 
-            if (progress == null)
-            {
-                progress = new Progress<ProgressData>();
-            }
-            var progData = new ProgressData
+            var progData = new ProgressData(progress)
             {
                 Status = "Generating sequence tags"
             };
@@ -672,12 +658,12 @@ namespace InformedProteomics.TopDown.Execution
             Parallel.ForEach(scanNums, pfeOptions, scanNum =>
             {
                 sequenceTagGen.Generate(scanNum);
-                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData,
+                SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progData,
                                      "spectra");
             });
 
             progData.StatusInternal = string.Empty;
-            progress.Report(progData.UpdatePercent(100.0));
+            progData.Report(100.0);
             Console.WriteLine(@"Generated sequence tags: " + sequenceTagGen.NumberOfGeneratedTags());
             return sequenceTagGen;
         }
@@ -685,12 +671,7 @@ namespace InformedProteomics.TopDown.Execution
         private LinkedList<Tuple<double, ScoreDistribution>>[] _cachedScoreDistributions;
         private DatabaseSequenceSpectrumMatch[] RunGeneratingFunction(SortedSet<DatabaseSequenceSpectrumMatch>[] sortedMatches, CancellationToken? cancellationToken = null, IProgress<ProgressData> progress = null)
         {
-            if (progress == null)
-            {
-                progress = new Progress<ProgressData>();
-            }
-
-            var progData = new ProgressData
+            var progData = new ProgressData(progress)
             {
                 Status = "Calculating spectral E-values for matches"
             };
@@ -782,7 +763,7 @@ namespace InformedProteomics.TopDown.Execution
                         match.SpecEvalue = scoreDist.GetSpectralEValue(match.Score);
 
                         currentTask = "Reporting progress " + currentIteration;
-                        SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progress, progData);
+                        SearchProgressReport(ref numProteins, ref lastUpdate, estimatedProteins, sw, progData);
                     }
                 }
                 catch (Exception ex)
@@ -800,7 +781,7 @@ namespace InformedProteomics.TopDown.Execution
             }
             
             progData.StatusInternal = string.Empty;
-            progress.Report(progData.UpdatePercent(100.0));
+            progData.Report(100.0);
             return finalMatches;
         }
 
