@@ -185,10 +185,13 @@ namespace InformedProteomics.TopDown.Execution
             set { ProductIonTolerance = new Tolerance(value); }
         }
 
-        // 0: all internal sequences, 
-        // 1: #NCleavages <= Max OR Cleavages <= Max (Default)
-        // 2: 1: #NCleavages <= Max AND Cleavages <= Max
-        public int SearchMode { get; private set; }
+        /// <summary>
+        /// 0: all internal sequences, 
+        /// 1: #NCleavages <= Max OR Cleavages <= Max (Default)
+        /// 2: 1: #NCleavages <= Max AND Cleavages <= Max
+        /// </summary>
+        /// <remarks>default 1</remarks>
+        public int SearchMode { get; set; }
 
         private LcMsRun _run;
         private CompositeScorerFactory _ms2ScorerFactory2;
