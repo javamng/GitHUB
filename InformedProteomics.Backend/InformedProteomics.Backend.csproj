@@ -101,6 +101,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Xml" />
@@ -109,6 +110,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\DatabaseSearchMode.cs" />
+    <Compile Include="Database\InternalCleavageType.cs" />
     <Compile Include="Database\PeptideEnumerator.cs" />
     <Compile Include="Database\AnnotationAndOffset.cs" />
     <Compile Include="Database\SearchableDatabase.cs" />
@@ -122,7 +125,9 @@
     <Compile Include="Data\Sequence\ISequenceTagGenerator.cs" />
     <Compile Include="Data\Sequence\ModificationInstance.cs" />
     <Compile Include="Data\Sequence\ShiftedSequenceGraph.cs" />
+    <Compile Include="Data\Spectrometry\AbstractFragmentScorer.cs" />
     <Compile Include="Data\Spectrometry\ActivationMethod.cs" />
+    <Compile Include="Data\Spectrometry\DeconvolutedSpectrum.cs" />
     <Compile Include="Data\Spectrometry\LcMsChargeMap.cs" />
     <Compile Include="Data\Spectrometry\ISequenceFilter.cs" />
     <Compile Include="Data\Spectrometry\DeconvolutedPeak.cs" />

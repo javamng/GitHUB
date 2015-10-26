@@ -19,6 +19,7 @@ namespace InformedProteomics.Test
     [TestFixture]
     internal class TestIcTopDown
     {
+        
         [Test]
         public void TestForManyMods()
         {
@@ -395,22 +396,23 @@ namespace InformedProteomics.Test
                     specFilePath,
                     dbFilePath,
                     outputDir,
-                    aaSet,
-                    minSequenceLength,
-                    maxSequenceLength,
-                    maxNumNTermCleavages,
-                    maxNumCTermCleavages,
-                    minPrecursorIonCharge,
-                    maxPrecursorIonCharge,
-                    minProductIonCharge,
-                    maxProductIonCharge,
-                    minSequenceMass,
-                    maxSequenceMass,
-                    precursorIonTolerancePpm,
-                    productIonTolerancePpm,
-                    tda,
-                    searchMode
-                    );
+                    aaSet, "")
+                    {
+                    MinSequenceLength = minSequenceLength,
+                    MaxSequenceLength = maxSequenceLength,
+                    MaxNumNTermCleavages = maxNumNTermCleavages,
+                    MaxNumCTermCleavages = maxNumCTermCleavages,
+                    MinPrecursorIonCharge = minPrecursorIonCharge,
+                    MaxPrecursorIonCharge = maxPrecursorIonCharge,
+                    MinProductIonCharge = minProductIonCharge,
+                    MaxProductIonCharge = maxProductIonCharge,
+                    MinSequenceMass = minSequenceMass,
+                    MaxSequenceMass = maxSequenceMass,
+                    PrecursorIonTolerancePpm = precursorIonTolerancePpm,
+                    ProductIonTolerancePpm = productIonTolerancePpm,
+                    RunTargetDecoyAnalysisBool = tda,
+                    SearchModeInt = searchMode,
+                    };
 
             //topDownLauncher.ForceParallel = true;
             //topDownLauncher.MaxNumThreads = -1;
@@ -458,7 +460,7 @@ namespace InformedProteomics.Test
             var aaSet = new AminoAcidSet(searchMods, numMaxModsPerProtein);
 
             var graph = SequenceGraph.CreateGraph(aaSet, annotation);
-            Console.WriteLine("NumProteoforms: " + graph.GetNumProteoforms());
+            Console.WriteLine("NumProteoforms: " + graph.GetNumProteoformCompositions());
 
             var run = InMemoryLcMsRun.GetLcMsRun(specFilePath, 1.4826, 1.4826);
             var ms2Scorer = new ProductScorerBasedOnDeconvolutedSpectra(run, 1, 15);
@@ -466,7 +468,7 @@ namespace InformedProteomics.Test
             var scorer = ms2Scorer.GetMs2Scorer(ms2ScanNum);
             Assert.NotNull(scorer, "Scorer is null!");
 
-            for (var i = 0; i < graph.GetNumProteoforms(); i++)
+            for (var i = 0; i < graph.GetNumProteoformCompositions(); i++)
             {
                 graph.SetSink(i);
                 Console.WriteLine("ModComb: " + graph.GetModificationCombinations()[i]);
