@@ -63,6 +63,7 @@ namespace InformedProteomics.TopDown.Execution
             MaxNumThreads = 4;
             ScanNumbers = null;
             NumMatchesPerSpectrum = 3;
+            TagBasedSearch = true;
         }
 
         public string ErrorMessage { get; private set; }
@@ -140,6 +141,8 @@ namespace InformedProteomics.TopDown.Execution
 
         /// <remarks>default Both</remarks>
         public DatabaseSearchMode RunTargetDecoyAnalysis { get; set; }
+
+        public bool TagBasedSearch { get; set; }
 
         public IEnumerable<int> ScanNumbers { get; set; }
 
@@ -332,8 +335,7 @@ namespace InformedProteomics.TopDown.Execution
             targetDb.Read();
             
             // Generate sequence tags for all MS/MS spectra
-
-            if (SearchMode == InternalCleavageType.SingleInternalCleavage)
+            if (TagBasedSearch)
             {
                 progData.StepRange(25.0);
                 progData.Status = "Generating Sequence Tags";
@@ -370,7 +372,7 @@ namespace InformedProteomics.TopDown.Execution
                 var targetMatches = new SortedSet<DatabaseSequenceSpectrumMatch>[_run.MaxLcScan + 1];
                 
                 progData.MaxPercentage = 42.5;
-                if (SearchMode == InternalCleavageType.SingleInternalCleavage)
+                if (TagBasedSearch)
                 {
                     sw.Reset();
                     Console.WriteLine(@"Tag-based searching the target database");
@@ -412,7 +414,7 @@ namespace InformedProteomics.TopDown.Execution
 
                 progData.MaxPercentage = 77.5;
                 var decoyMatches = new SortedSet<DatabaseSequenceSpectrumMatch>[_run.MaxLcScan + 1];
-                if (SearchMode == InternalCleavageType.SingleInternalCleavage)
+                if (TagBasedSearch)
                 {
                     sw.Reset();
                     Console.WriteLine(@"Tag-based searching the decoy database");
