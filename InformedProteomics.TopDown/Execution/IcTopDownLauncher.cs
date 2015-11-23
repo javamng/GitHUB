@@ -168,7 +168,7 @@ namespace InformedProteomics.TopDown.Execution
 
         /// <summary>
         /// 0: all internal sequences, 
-        /// 1: #NCleavages <= Max OR Cleavages <= Max (Default)
+        /// 1: #NCleavages  <= Max OR Cleavages <= Max (Default)
         /// 2: 1: #NCleavages <= Max AND Cleavages <= Max
         /// </summary>
         /// <remarks>default 1</remarks>
@@ -253,7 +253,11 @@ namespace InformedProteomics.TopDown.Execution
 
             progData.StepRange(20.0);
             ISequenceFilter ms1Filter;
-            if (string.IsNullOrWhiteSpace(FeatureFilePath))
+            if (this.ScanNumbers != null && this.ScanNumbers.Any())
+            {
+                ms1Filter = new SelectedMsMsFilter(this.ScanNumbers);
+            }
+            else if (string.IsNullOrWhiteSpace(FeatureFilePath))
             {
                 // Checks whether SpecFileName.ms1ft exists
                 var ms1FtFilePath = MassSpecDataReaderFactory.ChangeExtension(SpecFilePath, LcMsFeatureFinderLauncher.FileExtension);
